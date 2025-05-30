@@ -22,4 +22,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/services', [ServiceController::class, 'index']);
     Route::get('/orders', [LaundryOrderController::class, 'index']);
     Route::post('/orders', [LaundryOrderController::class, 'store']);
+    Route::put('/orders/{id}/status', [LaundryOrderController::class, 'updateStatus']);
+
 });
