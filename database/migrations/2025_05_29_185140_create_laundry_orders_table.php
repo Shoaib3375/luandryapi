@@ -17,7 +17,8 @@ return new class extends Migration
             $table->foreignId('service_id')->constrained()->onDelete('cascade');
             $table->decimal('quantity', 8, 2); // items or kg
             $table->decimal('total_price', 8, 2);
-            $table->enum('status', ['pending', 'processing', 'completed'])->default('pending');
+            $table->enum('status', ['Pending', 'Processing', 'Completed', 'Cancelled'])
+                ->default('Pending');
             $table->timestamps();
         });
     }
