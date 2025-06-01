@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class LaundryOrder extends Model
 {
@@ -14,7 +15,7 @@ class LaundryOrder extends Model
         'status',
     ];
 
-    protected static function booted()
+    protected static function booted(): void
     {
         static::creating(function ($order) {
             $service = \App\Models\Service::find($order->service_id);
@@ -23,12 +24,12 @@ class LaundryOrder extends Model
             }
         });
     }
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function service()
+    public function service(): BelongsTo
     {
         return $this->belongsTo(Service::class);
     }
