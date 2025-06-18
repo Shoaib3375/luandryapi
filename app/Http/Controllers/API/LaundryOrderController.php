@@ -48,13 +48,19 @@ class LaundryOrderController extends Controller
         ]);
 
         $order = LaundryOrder::findOrFail($id);
+
+
+        if (!auth()->user()->is_admin) {
+            return response()->json(['error' => 'Unauthorized — Admins only'], 403);
+        }
+
         $order->status = $request->status;
         $order->save();
 
         return response()->json([
-            'message' => 'Order status updated',
+            'message' => 'Order status updated successfully.',
             'order' => $order,
-        ]);
+        ], 200);
     }
 
 }
