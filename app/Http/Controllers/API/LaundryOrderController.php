@@ -63,4 +63,22 @@ class LaundryOrderController extends Controller
         ], 200);
     }
 
+    public function filterByStatus(Request $request): JsonResponse
+    {
+        $request->validate([
+            'status' => 'required|in:Pending,Processing,Completed,Cancelled',
+        ]);
+
+        $orders = LaundryOrder::with('user', 'service')
+            ->where('status', $request->status)
+            ->latest()
+            ->get();
+
+        return response()->json([
+            'status' => $request->status,
+            'orders' => $orders,
+        ]);
+    }
+
+
 }
