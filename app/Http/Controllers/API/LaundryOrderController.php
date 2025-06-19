@@ -4,9 +4,8 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\LaundryOrder;
-use App\Models\Service;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class LaundryOrderController extends Controller
 {
@@ -15,7 +14,7 @@ class LaundryOrderController extends Controller
 //        $this->middleware('auth:sanctum');
     }
 
-    public function index()
+    public function index(): JsonResponse
     {
         $orders = LaundryOrder::with('service')->where('user_id', auth()->id())->get();
 
@@ -23,7 +22,7 @@ class LaundryOrderController extends Controller
     }
 
 
-    public function store(Request $request)
+    public function store(Request $request):JsonResponse
     {
         $request->validate([
             'service_id' => 'required|exists:services,id',
@@ -42,20 +41,44 @@ class LaundryOrderController extends Controller
             'order' => $order
         ], 201);
     }
-    public function updateStatus(Request $request, $id)
+    public function updateStatus(Request $request, $id): JsonResponse
     {
         $request->validate([
             'status' => 'required|in:Pending,Processing,Completed,Cancelled',
         ]);
 
         $order = LaundryOrder::findOrFail($id);
+
+
+        if (!auth()->user()->is_admin) {
+            return response()->json(['error' => 'Unauthorized — Admins only'], 403);
+        }
+
         $order->status = $request->status;
         $order->save();
 
         return response()->json([
-            'message' => 'Order status updated',
+            'message' => 'Order status updated successfully.',
             'order' => $order,
+        ], 200);
+    }
+
+    public function filterByStatus(Request $request): JsonResponse
+    {
+        $request->validate([
+            'status' => 'required|in:Pending,Processing,Completed,Cancelled',
+        ]);
+
+        $orders = LaundryOrder::with('user', 'service')
+            ->where('status', $request->status)
+            ->latest()
+            ->get();
+
+        return response()->json([
+            'status' => $request->status,
+            'orders' => $orders,
         ]);
     }
+
 
 }
