@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\LaundryOrder;
+use App\Models\OrderLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -48,20 +49,36 @@ class LaundryOrderController extends Controller
         ]);
 
         $order = LaundryOrder::findOrFail($id);
+        $oldStatus = $order->status;
 
 
         if (!auth()->user()->is_admin) {
             return response()->json(['error' => 'Unauthorized — Admins only'], 403);
         }
 
+
+        if ($oldStatus === $request->status) {
+            return response()->json([
+                'message' => 'Order status is already "' . $oldStatus . '". No changes made.',
+            ], 200);
+        }
+
         $order->status = $request->status;
         $order->save();
+
+        OrderLog::create([
+            'order_id' => $order->id,
+            'admin_id' => auth()->id(),
+            'old_status' => $oldStatus,
+            'new_status' => $order->status,
+        ]);
 
         return response()->json([
             'message' => 'Order status updated successfully.',
             'order' => $order,
         ], 200);
     }
+
 
     public function filterByStatus(Request $request): JsonResponse
     {

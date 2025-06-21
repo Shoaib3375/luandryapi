@@ -3,6 +3,7 @@
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\LaundryOrderController;
 use App\Http\Controllers\API\ServiceController;
+use App\Models\OrderLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -29,5 +30,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/orders', [LaundryOrderController::class, 'index']);
     Route::post('/orders', [LaundryOrderController::class, 'store']);
     Route::put('/orders/{id}/status', [LaundryOrderController::class, 'updateStatus']);
-
 });
+Route::get('/orders/{id}/logs', function ($id) {
+    return OrderLog::where('order_id', $id)->with('admin')->latest()->get();
+})->middleware('auth:api');
+
