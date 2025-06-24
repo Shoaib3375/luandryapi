@@ -30,5 +30,10 @@ jobs:
       - name:  Generate App Key
         run: php artisan key:generate
 
+      - name: Run migrations
+        run: php artisan migrate --force
+
       - name:  Run Tests (SQLite)
         run: php artisan test
+      - name: Create SQLite database file
+        run: touch database/database.sqlite
