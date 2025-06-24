@@ -10,6 +10,7 @@ use Tests\TestCase;
 
 class OrderTest extends TestCase
 {
+    use RefreshDatabase;
     /**
      * A basic feature test example.
      */
