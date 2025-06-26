@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('laundry_orders', function (Blueprint $table) {
-            $table->text('note')->nullable()->after('status');
+            $table->enum('payment_status', ['Paid', 'Unpaid'])->default('Unpaid')->after('status');
         });
     }
 
@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('laundry_orders', function (Blueprint $table) {
-            $table->dropColumn('note');
+            $table->dropColumn('payment_status');
         });
     }
 };
