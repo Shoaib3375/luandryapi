@@ -15,7 +15,8 @@ class LaundryOrder extends Model
         'quantity',
         'total_price',
         'status',
-        'note'
+        'note',
+        'payment_status'
     ];
 
     protected static function booted(): void

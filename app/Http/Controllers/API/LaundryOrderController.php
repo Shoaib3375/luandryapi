@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\LaundryOrder;
 use App\Models\OrderLog;
+use App\Models\Service;
 use App\Notifications\OrderStatusUpdated;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -30,14 +31,35 @@ class LaundryOrderController extends Controller
             'service_id' => 'required|exists:services,id',
             'quantity' => 'required|numeric|min:0.1',
             'note' => 'nullable|string|max:1000',
+            'coupon_code' => 'nullable|string'
         ]);
+        $service = Service::findOrFail($request->service_id);
+
+        $total = $service->pricing_method === 'weight'
+            ? $service->price * floatval($request->quantity)
+            : $service->price * intval($request->quantity);
+
+        if ($request->filled('coupon_code')) {
+            $coupon = Coupon::where('code', $request->coupon_code)
+                ->where(function ($q) {
+                    $q->whereNull('expires_at')
+                        ->orWhere('expires_at', '>', now());
+                })->first();
+
+            if ($coupon) {
+                $total -= ($total * $coupon->discount_percent / 100);
+            }
+        }
 
         $order = LaundryOrder::create([
             'user_id' => auth()->id(),
             'service_id' => $request->service_id,
             'quantity' => $request->quantity,
             'note' => $request->note,
+            'total_price' => $total,
             'status' => 'Pending',
+            'payment_status' => 'Unpaid',
+
 
         ]);
 

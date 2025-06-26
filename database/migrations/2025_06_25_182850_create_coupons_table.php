@@ -11,8 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('laundry_orders', function (Blueprint $table) {
-            $table->text('note')->nullable()->after('status');
+        Schema::create('coupons', function (Blueprint $table) {
+            $table->id();
+            $table->string('code')->unique();
+            $table->decimal('discount_percent', 5, 2);
+            $table->date('expires_at')->nullable();
+            $table->timestamps();
         });
     }
 
@@ -21,8 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('laundry_orders', function (Blueprint $table) {
-            $table->dropColumn('note');
-        });
+        Schema::dropIfExists('coupons');
     }
 };
