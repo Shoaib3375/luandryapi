@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\API\AdminDashboardController;
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\LaundryOrderController;
 use App\Http\Controllers\API\NotificationController;
@@ -52,6 +53,16 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
 });
 
+
+
+Route::middleware(['auth:api'])->prefix('admin')->group(function () {
+    Route::get('/dashboard', [AdminDashboardController::class, 'stats']);
+    Route::get('/revenue', [AdminDashboardController::class, 'revenueReport']);
+});
+
+Route::get('/orders/{id}/logs', function ($id) {
+    return OrderLog::where('order_id', $id)->with('admin')->latest()->get();
+})->middleware('auth:api');
 
 
 
