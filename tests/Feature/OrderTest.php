@@ -34,6 +34,7 @@ class OrderTest extends TestCase
                 'service_id' => $service->id,
                 'quantity' => 2,
             ]);
+//        dump($response->json());
 
         $response->assertStatus(201);
         $response->assertJsonFragment(['total_price' => 20.00]);
