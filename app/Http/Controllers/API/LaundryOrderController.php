@@ -9,9 +9,11 @@ use App\Models\OrderLog;
 use App\Models\Service;
 use App\Models\Coupon;
 use App\Notifications\OrderStatusUpdated;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Traits\ApiResponseTrait;
+use Throwable;
 
 class LaundryOrderController extends Controller
 {
@@ -88,6 +90,7 @@ class LaundryOrderController extends Controller
 
         $order->user->notify(new OrderStatusUpdated($order));
 
+
         OrderLog::create([
             'order_id'   => $order->id,
             'admin_id'   => auth()->id(),
@@ -114,19 +117,27 @@ class LaundryOrderController extends Controller
 
     public function cancelOrder($id): JsonResponse
     {
-        $order = LaundryOrder::where('id', $id)
-            ->where('user_id', auth()->id())
-            ->firstOrFail();
+        try {
+            $order = LaundryOrder::where('id', $id)
+                ->where('user_id', auth()->id())
+                ->firstOrFail();
 
-        if ($order->status !== 'Pending') {
-            return $this->errorResponse('Only pending orders can be cancelled.', 400);
+            if ($order->status !== 'Pending') {
+                return $this->errorResponse('Only pending orders can be cancelled.', 400);
+            }
+
+            $order->status = 'Cancelled';
+            $order->save();
+
+            return $this->successResponse(new LaundryOrderResource($order), 'Order cancelled successfully.');
+
+        } catch (ModelNotFoundException $e) {
+            return $this->errorResponse('You are not authorized to cancel this order or it does not exist.', 403);
+        } catch (Throwable $e) {
+            return $this->exceptionResponse($e, 'Something went wrong while cancelling the order.');
         }
-
-        $order->status = 'Cancelled';
-        $order->save();
-
-        return $this->successResponse(new LaundryOrderResource($order), 'Order cancelled successfully.');
     }
+
 
     public function updateOrder(Request $request, $id): JsonResponse
     {
@@ -135,10 +146,13 @@ class LaundryOrderController extends Controller
                 'quantity' => 'required|numeric|min:0.1',
             ]);
 
-            $order = LaundryOrder::where('id', $id)
-                ->where('user_id', auth()->id())
-                ->with('service')
-                ->firstOrFail();
+            $query = LaundryOrder::where('id', $id)->with('service');
+
+            if (!auth()->user()->is_admin) {
+                $query->where('user_id', auth()->id());
+            }
+
+            $order = $query->firstOrFail();
 
             if ($order->status !== 'Pending') {
                 return $this->errorResponse('Only pending orders can be updated.', 400);
@@ -171,8 +185,8 @@ class LaundryOrderController extends Controller
 
             return $this->successResponse(new LaundryOrderResource($order), 'Order updated successfully.');
 
-        } catch (\Throwable $e) {
-            return $this->exceptionResponse($e, 'Failed to update order.');
+        } catch (ModelNotFoundException  $e) {
+            return $this->errorResponse('Order not found or unauthorized.', 404);
         }
     }
 

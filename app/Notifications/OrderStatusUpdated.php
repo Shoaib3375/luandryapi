@@ -45,6 +45,7 @@ class OrderStatusUpdated extends Notification
             ->line('Thank you for using our service!');
     }
 
+
     /**
      * Get the array representation of the notification.
      *
