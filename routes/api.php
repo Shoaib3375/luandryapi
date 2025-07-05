@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\API\AdminDashboardController;
 use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\API\CouponController;
 use App\Http\Controllers\API\LaundryOrderController;
 use App\Http\Controllers\API\NotificationController;
 use App\Http\Controllers\API\ServiceController;
@@ -10,6 +11,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 
+
+Route::get('/', function () {
+    return response()->json(['message' => 'Welcome to eLaundry!'], 200);
+});
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -41,6 +46,8 @@ Route::middleware('auth:api')->group(function () {
 
 Route::middleware(['auth:api', 'is_admin'])->group(function () {
     Route::put('/orders/{id}/status', [LaundryOrderController::class, 'updateStatus']);
+    Route::post('/coupons', [CouponController::class, 'store']);
+    Route::get('/coupons', [CouponController::class, 'index']);
 });
 
 Route::get('/my-orders', [LaundryOrderController::class, 'userOrders'])->middleware('auth:api');
