@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Traits\ApiResponseTrait;
+use Illuminate\Support\Facades\Auth;
 use Throwable;
 
 class LaundryOrderController extends Controller
@@ -21,8 +22,21 @@ class LaundryOrderController extends Controller
 
     public function index(): JsonResponse
     {
-        $orders = LaundryOrder::with('service')->where('user_id', auth()->id())->get();
-        return $this->successResponse(LaundryOrderResource::collection($orders), 'Order list');
+        $user = Auth::user();
+
+        if ($user->is_admin) {
+            $orders = LaundryOrder::with('service')->latest()->paginate(10);
+        } else {
+            $orders = LaundryOrder::where('user_id', $user->id)
+                ->with('service')
+                ->latest()
+                ->paginate(10);
+        }
+        return response()->json([
+            'data' => $orders,
+            'message' => 'Order list',
+            'status' => true,
+        ]);
     }
 
     public function store(Request $request): JsonResponse
