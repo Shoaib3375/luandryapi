@@ -15,12 +15,7 @@ class AdminOrderStatusTest extends TestCase
     /**
      * A basic feature test example.
      */
-    public function test_example(): void
-    {
-        $response = $this->get('/');
 
-        $response->assertStatus(200);
-    }
     public function test_admin_can_update_order_status()
     {
         $admin = User::factory()->create(['is_admin' => true]);
