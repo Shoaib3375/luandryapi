@@ -11,10 +11,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name:  Checkout Code
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name:  Setup PHP
+      - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: 8.3
@@ -24,16 +24,19 @@ jobs:
       - name: Install Dependencies
         run: composer install --no-progress --prefer-dist
 
-      - name:  Setup Environment
+      - name: Create SQLite database file
+        run: |
+          mkdir -p database
+          touch database/database.sqlite
+
+      - name: Setup Environment
         run: cp .env.testing .env
 
-      - name:  Generate App Key
+      - name: Generate App Key
         run: php artisan key:generate
 
       - name: Run migrations
         run: php artisan migrate --force
 
-      - name:  Run Tests (SQLite)
+      - name: Run Tests (SQLite)
         run: php artisan test
-      - name: Create SQLite database file
-        run: touch database/database.sqlite
