@@ -8,7 +8,9 @@ use App\Http\Controllers\API\NotificationController;
 use App\Http\Controllers\API\ServiceController;
 use App\Models\OrderLog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Broadcasting\BroadcastController;
 
 
 
@@ -71,5 +73,10 @@ Route::get('/orders/{id}/logs', function ($id) {
     return OrderLog::where('order_id', $id)->with('admin')->latest()->get();
 })->middleware('auth:api');
 
+Broadcast::channel('user.{id}', function ($user, $id) {
+    return (int) $user->id === (int) $id;
+});
 
+// Broadcasting authentication endpoint
+Route::post('/broadcasting/auth', [BroadcastController::class, 'authenticate'])->middleware('auth:api');
 

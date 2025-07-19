@@ -29,7 +29,7 @@ class OrderStatusUpdated extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['mail','database'];
+        return ['mail', 'database', 'broadcast'];
     }
 
     /**
@@ -54,7 +54,24 @@ class OrderStatusUpdated extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            //
+            'order_id' => $this->order->id,
+            'status' => $this->order->status,
+            'message' => 'Your laundry order #' . $this->order->id . ' status has been updated to ' . $this->order->status
+        ];
+    }
+    
+    /**
+     * Get the broadcastable representation of the notification.
+     *
+     * @param  mixed  $notifiable
+     * @return array
+     */
+    public function toBroadcast($notifiable)
+    {
+        return [
+            'order_id' => $this->order->id,
+            'status' => $this->order->status,
+            'message' => 'Your laundry order #' . $this->order->id . ' status has been updated to ' . $this->order->status
         ];
     }
 }
