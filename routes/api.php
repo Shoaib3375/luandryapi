@@ -20,63 +20,47 @@ Route::get('/', function () {
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-
+// User authentication routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
-
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
 });
 
+// User order routes
 Route::middleware('auth:api')->group(function () {
-
-
     Route::get('/orders', [LaundryOrderController::class, 'index']);
     Route::post('/orders', [LaundryOrderController::class, 'store']);
     Route::get('/orders/filter', [LaundryOrderController::class, 'filterByStatus']);
     Route::put('/orders/{id}/cancel', [LaundryOrderController::class, 'cancelOrder']);
     Route::put('/orders/{id}/update', [LaundryOrderController::class, 'updateOrder']);
-
+    Route::get('/services', [ServiceController::class, 'index']);
     Route::get('/orders/{id}/logs', function ($id) {
         return OrderLog::where('order_id', $id)->with('admin')->latest()->get();
     });
-    Route::get('/services', [ServiceController::class, 'index']);
-});
-
-
-Route::middleware(['auth:api', 'is_admin'])->group(function () {
-    Route::put('/orders/{id}/status', [LaundryOrderController::class, 'updateStatus']);
-    Route::post('/coupons', [CouponController::class, 'store']);
-    Route::get('/coupons', [CouponController::class, 'index']);
-});
-
-Route::get('/my-orders', [LaundryOrderController::class, 'userOrders'])->middleware('auth:api');
-
-
-
-Route::middleware('auth:api')->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
 });
 
-
-
-Route::middleware(['auth:api'])->prefix('admin')->group(function () {
-    Route::get('/dashboard', [AdminDashboardController::class, 'stats']);
-    Route::get('/revenue', [AdminDashboardController::class, 'revenueReport']);
+// Admin-only routes
+Route::middleware(['auth:api', 'is_admin'])->group(function () {
+    Route::put('/orders/{id}/status', [LaundryOrderController::class, 'updateStatus']);
+    Route::post('/coupons', [CouponController::class, 'store']);
+    Route::get('/coupons', [CouponController::class, 'index']);
+    Route::prefix('admin')->group(function () {
+        Route::get('/dashboard', [AdminDashboardController::class, 'stats']);
+        Route::get('/revenue', [AdminDashboardController::class, 'revenueReport']);
+    });
 });
 
-Route::get('/orders/{id}/logs', function ($id) {
-    return OrderLog::where('order_id', $id)->with('admin')->latest()->get();
-})->middleware('auth:api');
+// User's own orders
+Route::get('/my-orders', [LaundryOrderController::class, 'userOrders'])->middleware('auth:api');
 
+// Broadcasting
 Broadcast::channel('user.{id}', function ($user, $id) {
     return (int) $user->id === (int) $id;
 });
-
-// Broadcasting authentication endpoint
 Route::post('/broadcasting/auth', [BroadcastController::class, 'authenticate'])->middleware('auth:api');
-

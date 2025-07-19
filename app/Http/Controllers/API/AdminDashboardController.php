@@ -22,7 +22,7 @@ class AdminDashboardController extends Controller
             'pending_orders'      => LaundryOrder::where('status', 'Pending')->count(),
             'completed_orders'    => LaundryOrder::where('status', 'Completed')->count(),
             'revenue_today'       => LaundryOrder::whereDate('created_at', $today)->sum('total_price'),
-            'revenue_this_month'  => LaundryOrder::whereBetween('created_at', [$thisMonth, now()])->sum('total_price'),
+            'revenue_this_month'  => LaundryOrder::whereBetween('created_at', [$thisMonth, Carbon::now()])->sum('total_price'),
         ];
 
         return $this->successResponse($data, 'Data fetched successfully');

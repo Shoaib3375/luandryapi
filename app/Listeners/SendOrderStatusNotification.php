@@ -3,7 +3,9 @@
 namespace App\Listeners;
 
 use App\Events\OrderStatusUpdated;
+use App\Notifications\OrderStatusChangedNotification;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Auth\User;
 use Illuminate\Queue\InteractsWithQueue;
 
 class SendOrderStatusNotification
