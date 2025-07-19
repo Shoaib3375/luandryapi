@@ -9,6 +9,7 @@ use App\Models\OrderLog;
 use App\Models\Service;
 use App\Models\Coupon;
 use App\Notifications\OrderStatusUpdated;
+use App\Events\OrderStatusUpdated as OrderStatusUpdatedEvent;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -102,8 +103,11 @@ class LaundryOrderController extends Controller
         $order->status = $validated['status'];
         $order->save();
 
+        // Send notification
         $order->user->notify(new OrderStatusUpdated($order));
-
+        
+        // Broadcast event
+        event(new OrderStatusUpdatedEvent($order));
 
         OrderLog::create([
             'order_id'   => $order->id,
@@ -142,6 +146,20 @@ class LaundryOrderController extends Controller
 
             $order->status = 'Cancelled';
             $order->save();
+            
+            // Send notification when user cancels their order
+            $order->user->notify(new OrderStatusUpdated($order));
+            
+            // Broadcast event
+            event(new OrderStatusUpdatedEvent($order));
+            
+            // Log the cancellation
+            OrderLog::create([
+                'order_id'   => $order->id,
+                'admin_id'   => auth()->id(),
+                'old_status' => 'Pending',
+                'new_status' => 'Cancelled',
+            ]);
 
             return $this->successResponse(new LaundryOrderResource($order), 'Order cancelled successfully.');
 
