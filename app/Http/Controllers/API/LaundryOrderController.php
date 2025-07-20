@@ -40,6 +40,19 @@ class LaundryOrderController extends Controller
         ]);
     }
 
+    private function applyCouponDiscount($total, $couponCode)
+    {
+        if (!$couponCode) return $total;
+        $coupon = Coupon::where('code', $couponCode)
+            ->where(function ($q) {
+                $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+            })->first();
+        if ($coupon) {
+            $total -= ($total * $coupon->discount_percent / 100);
+        }
+        return $total;
+    }
+
     public function store(Request $request): JsonResponse
     {
         try {
@@ -55,16 +68,7 @@ class LaundryOrderController extends Controller
                 ? $service->price * floatval($validated['quantity'])
                 : $service->price * intval($validated['quantity']);
 
-            if ($request->filled('coupon_code')) {
-                $coupon = Coupon::where('code', $request->coupon_code)
-                    ->where(function ($q) {
-                        $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
-                    })->first();
-
-                if ($coupon) {
-                    $total -= ($total * $coupon->discount_percent / 100);
-                }
-            }
+            $total = $this->applyCouponDiscount($total, $validated['coupon_code'] ?? null);
 
             $order = LaundryOrder::create([
                 'user_id'        => auth()->id(),
@@ -74,6 +78,7 @@ class LaundryOrderController extends Controller
                 'total_price'    => $total,
                 'status'         => 'Pending',
                 'payment_status' => 'Unpaid',
+                'coupon_code'    => $validated['coupon_code'] ?? null,
             ]);
 
             return $this->successResponse(new LaundryOrderResource($order), 'Order placed successfully', 201);
@@ -105,7 +110,7 @@ class LaundryOrderController extends Controller
 
         // Send notification
         $order->user->notify(new OrderStatusUpdated($order));
-        
+
         // Broadcast event
         event(new OrderStatusUpdatedEvent($order));
 
@@ -128,7 +133,7 @@ class LaundryOrderController extends Controller
         $orders = LaundryOrder::with('user', 'service')
             ->where('status', $validated['status'])
             ->latest()
-            ->get();
+            ->paginate(10);
 
         return $this->successResponse(LaundryOrderResource::collection($orders), 'Filtered orders by status');
     }
@@ -146,13 +151,13 @@ class LaundryOrderController extends Controller
 
             $order->status = 'Cancelled';
             $order->save();
-            
+
             // Send notification when user cancels their order
             $order->user->notify(new OrderStatusUpdated($order));
-            
+
             // Broadcast event
             event(new OrderStatusUpdatedEvent($order));
-            
+
             // Log the cancellation
             OrderLog::create([
                 'order_id'   => $order->id,
@@ -176,6 +181,7 @@ class LaundryOrderController extends Controller
         try {
             $validated = $request->validate([
                 'quantity' => 'required|numeric|min:0.1',
+                'coupon_code' => 'nullable|string'
             ]);
 
             $query = LaundryOrder::where('id', $id)->with('service');
@@ -197,22 +203,12 @@ class LaundryOrderController extends Controller
                 ? $service->price * floatval($quantity)
                 : $service->price * intval($quantity);
 
-            $discountedTotal = $baseTotal;
-
-            if (!empty($order->coupon_code)) {
-                $coupon = Coupon::where('code', $order->coupon_code)
-                    ->where(function ($q) {
-                        $q->whereNull('expires_at')
-                            ->orWhere('expires_at', '>', now());
-                    })->first();
-
-                if ($coupon) {
-                    $discountedTotal -= ($discountedTotal * $coupon->discount_percent / 100);
-                }
-            }
+            $couponCode = $validated['coupon_code'] ?? $order->coupon_code;
+            $discountedTotal = $this->applyCouponDiscount($baseTotal, $couponCode);
 
             $order->quantity = $quantity;
             $order->total_price = $discountedTotal;
+            $order->coupon_code = $couponCode;
             $order->save();
 
             return $this->successResponse(new LaundryOrderResource($order), 'Order updated successfully.');

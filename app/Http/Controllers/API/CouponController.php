@@ -4,12 +4,15 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Coupon;
+use App\Traits\ApiResponseTrait;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
 class CouponController extends Controller
 {
+    use ApiResponseTrait;
+
     public function store(Request $request): JsonResponse
     {
         try {
@@ -27,34 +30,17 @@ class CouponController extends Controller
                 $message .= ' This coupon is currently active.';
             }
 
-            return response()->json([
-                'success' => true,
-                'message' => $message,
-                'data' => $coupon
-            ]);
+            return $this->successResponse($coupon, $message);
         } catch (ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation error.',
-                'errors' => $e->errors()
-            ], 422);
+            return $this->errorResponse('Validation error.', $e->errors(), 422);
         } catch (\Throwable $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to create coupon.',
-                'error' => $e->getMessage()
-            ], 500);
+            return $this->errorResponse('Failed to create coupon.', $e->getMessage(), 500);
         }
     }
 
 
     public function index(): JsonResponse
     {
-        return response()->json([
-            'success' => true,
-            'message' => 'Coupons fetched successfully.',
-            'data' => Coupon::orderBy('expires_at', 'asc')->get(),
-        ]);
-
+        return $this->successResponse(Coupon::orderBy('expires_at', 'asc')->get(), 'Coupons fetched successfully.');
     }
 }
