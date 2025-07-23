@@ -18,9 +18,9 @@ class EventServiceProvider extends ServiceProvider
             SendEmailVerificationNotification::class,
         ],
         // Add your custom events here
-        // App\Events\OrderStatusUpdated::class => [
-        //     App\Listeners\SendOrderStatusNotification::class,
-        // ],
+        \Illuminate\Notifications\Events\NotificationSent::class => [
+            \App\Listeners\LogNotificationSent::class,
+        ],
     ];
 
     /**

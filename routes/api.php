@@ -5,10 +5,13 @@ use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\CouponController;
 use App\Http\Controllers\API\LaundryOrderController;
 use App\Http\Controllers\API\NotificationController;
+use App\Http\Controllers\API\OrderLogController;
 use App\Http\Controllers\API\ServiceController;
+use App\Http\Controllers\API\TestController;
 use App\Models\OrderLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Broadcast;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Broadcasting\BroadcastController;
 
@@ -16,6 +19,20 @@ use Illuminate\Broadcasting\BroadcastController;
 
 Route::get('/', function () {
     return response()->json(['message' => 'Welcome to eLaundry!'], 200);
+});
+
+// Debug endpoint for order logs
+Route::get('/debug/orders/{id}/logs', function ($id) {
+    $logs = DB::table('order_logs')
+        ->where('order_id', $id)
+        ->orderBy('created_at', 'desc')
+        ->get();
+        
+    return response()->json([
+        'order_id' => $id,
+        'logs' => $logs,
+        'count' => $logs->count()
+    ]);
 });
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -37,9 +54,8 @@ Route::middleware('auth:api')->group(function () {
     Route::put('/orders/{id}/cancel', [LaundryOrderController::class, 'cancelOrder']);
     Route::put('/orders/{id}/update', [LaundryOrderController::class, 'updateOrder']);
     Route::get('/services', [ServiceController::class, 'index']);
-    Route::get('/orders/{id}/logs', function ($id) {
-        return OrderLog::where('order_id', $id)->with('admin')->latest()->get();
-    });
+    Route::get('/orders/{id}/logs', [OrderLogController::class, 'index']);
+    Route::get('/orders/{id}/logs/check/{status}', [OrderLogController::class, 'checkStatusChange']);
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
@@ -48,6 +64,7 @@ Route::middleware('auth:api')->group(function () {
 // Admin-only routes
 Route::middleware(['auth:api', 'is_admin'])->group(function () {
     Route::put('/orders/{id}/status', [LaundryOrderController::class, 'updateStatus']);
+    Route::post('/test/order-log', [TestController::class, 'testOrderLog']);
     Route::post('/coupons', [CouponController::class, 'store']);
     Route::get('/coupons', [CouponController::class, 'index']);
     Route::prefix('admin')->group(function () {
