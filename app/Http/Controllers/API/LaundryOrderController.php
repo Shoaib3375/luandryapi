@@ -15,6 +15,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class LaundryOrderController extends Controller
@@ -26,7 +28,7 @@ class LaundryOrderController extends Controller
         $user = Auth::user();
 
         if ($user->is_admin) {
-            $orders = LaundryOrder::with('service')->latest()->paginate(10);
+            $orders = LaundryOrder::with(['service', 'user'])->latest()->paginate(10);
         } else {
             $orders = LaundryOrder::where('user_id', $user->id)
                 ->with('service')
@@ -105,21 +107,25 @@ class LaundryOrderController extends Controller
             return $this->successResponse(null, "Order already in status: \"$oldStatus\"", 200);
         }
 
+        // Update order status
         $order->status = $validated['status'];
         $order->save();
 
-        // Send notification
-        $order->user->notify(new OrderStatusUpdated($order));
-
-        // Broadcast event
-        event(new OrderStatusUpdatedEvent($order));
-
-        OrderLog::create([
-            'order_id'   => $order->id,
-            'admin_id'   => auth()->id(),
-            'old_status' => $oldStatus,
-            'new_status' => $order->status,
+        // Create order log - SIMPLIFIED DIRECT APPROACH
+        DB::insert('INSERT INTO order_logs (order_id, admin_id, old_status, new_status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)', [
+            $order->id,
+            auth()->id(),
+            $oldStatus,
+            $validated['status'],
+            now(),
+            now()
         ]);
+
+        // Send notification to database
+        $order->user->notify(new OrderStatusUpdated($order));
+        
+        // Broadcast event
+        event(new OrderStatusUpdatedEvent("Your order #{$order->id} status updated to {$order->status}", $order->user_id));
 
         return $this->successResponse(new LaundryOrderResource($order), 'Order status updated successfully');
     }
@@ -154,16 +160,18 @@ class LaundryOrderController extends Controller
 
             // Send notification when user cancels their order
             $order->user->notify(new OrderStatusUpdated($order));
-
+            
             // Broadcast event
-            event(new OrderStatusUpdatedEvent($order));
+            event(new OrderStatusUpdatedEvent("Your order #{$order->id} status updated to {$order->status}", $order->user_id));
 
-            // Log the cancellation
-            OrderLog::create([
-                'order_id'   => $order->id,
-                'admin_id'   => auth()->id(),
-                'old_status' => 'Pending',
-                'new_status' => 'Cancelled',
+            // Log the cancellation - USING SAME DIRECT APPROACH
+            DB::insert('INSERT INTO order_logs (order_id, admin_id, old_status, new_status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)', [
+                $order->id,
+                auth()->id(),
+                'Pending',
+                'Cancelled',
+                now(),
+                now()
             ]);
 
             return $this->successResponse(new LaundryOrderResource($order), 'Order cancelled successfully.');
@@ -174,7 +182,6 @@ class LaundryOrderController extends Controller
             return $this->exceptionResponse($e, 'Something went wrong while cancelling the order.');
         }
     }
-
 
     public function updateOrder(Request $request, $id): JsonResponse
     {

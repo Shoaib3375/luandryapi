@@ -5,73 +5,75 @@ namespace App\Notifications;
 use App\Models\LaundryOrder;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Notifications\Messages\BroadcastMessage;
+use Illuminate\Support\Facades\Log;
 
 class OrderStatusUpdated extends Notification
 {
-    use Queueable;
+    // Removed ShouldQueue to ensure immediate processing
 
-    public $order;
+    protected $order;
+    protected $message;
 
     /**
      * Create a new notification instance.
      */
-    public function __construct(LaundryOrder $order)
+    public function __construct($orderOrMessage)
     {
-        $this->order = $order;
+        if ($orderOrMessage instanceof LaundryOrder) {
+            $this->order = $orderOrMessage;
+            $this->message = "Your order id {$this->order->id} status updated to {$this->order->status}";
+            
+            // Log order status change
+            Log::info('Order status changed', [
+                'order_id' => $this->order->id,
+                'status' => $this->order->status,
+                'user_id' => $this->order->user_id
+            ]);
+        } else {
+            $this->message = $orderOrMessage;
+        }
     }
 
     /**
      * Get the notification's delivery channels.
-     *
-     * @return array<int, string>
      */
     public function via(object $notifiable): array
     {
-        return ['mail', 'database', 'broadcast'];
+        return ['database', 'broadcast'];
     }
-
-    /**
-     * Get the mail representation of the notification.
-     */
-    public function toMail(object $notifiable): MailMessage
-    {
-        return (new MailMessage)
-            ->greeting('Hello ' . $notifiable->name)
-            ->line('Your laundry order id:' . $this->order->id . ' status has been updated.')
-            ->line('New Status: ' . $this->order->status)
-            ->action('View Order', url('/orders/' . $this->order->id))
-            ->line('Thank you for using our service!');
-    }
-
 
     /**
      * Get the array representation of the notification.
-     *
-     * @return array<string, mixed>
      */
     public function toArray(object $notifiable): array
     {
-        return [
-            'order_id' => $this->order->id,
-            'status' => $this->order->status,
-            'message' => 'Your laundry order #' . $this->order->id . ' status has been updated to ' . $this->order->status
+        $data = [
+            'message' => $this->message,
         ];
+
+        if ($this->order) {
+            $data['order_id'] = $this->order->id;
+            $data['status'] = $this->order->status;
+        }
+
+        return $data;
     }
-    
+
+    /**
+     * Get the database representation of the notification.
+     */
+    public function toDatabase(object $notifiable): array
+    {
+        return $this->toArray($notifiable);
+    }
+
     /**
      * Get the broadcastable representation of the notification.
-     *
-     * @param  mixed  $notifiable
-     * @return array
      */
-    public function toBroadcast($notifiable)
+    public function toBroadcast(object $notifiable): BroadcastMessage
     {
-        return [
-            'order_id' => $this->order->id,
-            'status' => $this->order->status,
-            'message' => 'Your laundry order #' . $this->order->id . ' status has been updated to ' . $this->order->status
-        ];
+        return new BroadcastMessage($this->toArray($notifiable));
     }
 }
