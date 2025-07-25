@@ -7,6 +7,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\BroadcastMessage;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Log;
 
 class OrderStatusUpdated extends Notification
@@ -41,7 +42,7 @@ class OrderStatusUpdated extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['database', 'broadcast'];
+        return ['database', 'broadcast', 'mail'];
     }
 
     /**
@@ -75,5 +76,23 @@ class OrderStatusUpdated extends Notification
     public function toBroadcast(object $notifiable): BroadcastMessage
     {
         return new BroadcastMessage($this->toArray($notifiable));
+    }
+
+    /**
+     * Get the mail representation of the notification.
+     */
+    public function toMail(object $notifiable): MailMessage
+    {
+        return (new MailMessage)
+            ->subject('Order Status Update - ' . config('app.name'))
+            ->greeting('Hello ' . $notifiable->name . '!')
+            ->line($this->message)
+            ->when($this->order, function ($mail) {
+                return $mail->line('Order ID: #' . $this->order->id)
+                    ->line('Service: ' . $this->order->service->name)
+                    ->line('Total: $' . number_format($this->order->total_price, 2));
+            })
+            ->action('View Order', url('/orders/' . ($this->order->id ?? '')))
+            ->line('Thank you for using our laundry service!');
     }
 }

@@ -17,7 +17,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'stateful' => EnsureFrontendRequestsAreStateful::class,
             'is_admin' => IsAdmin::class,
-
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

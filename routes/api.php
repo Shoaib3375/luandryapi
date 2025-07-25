@@ -47,7 +47,7 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 // User order routes
-Route::middleware('auth:api')->group(function () {
+Route::middleware('auth:sanctum')->group(function () {
     Route::get('/orders', [LaundryOrderController::class, 'index']);
     Route::post('/orders', [LaundryOrderController::class, 'store']);
     Route::get('/orders/filter', [LaundryOrderController::class, 'filterByStatus']);
@@ -63,7 +63,7 @@ Route::middleware('auth:api')->group(function () {
 });
 
 // Admin-only routes
-Route::middleware(['auth:api', 'is_admin'])->group(function () {
+Route::middleware(['auth:sanctum', 'is_admin'])->group(function () {
     Route::put('/orders/{id}/status', [LaundryOrderController::class, 'updateStatus']);
     Route::put('/orders/{id}/cancel', [LaundryOrderController::class, 'cancelOrder']);
     Route::post('/test/order-log', [TestController::class, 'testOrderLog']);
@@ -76,10 +76,10 @@ Route::middleware(['auth:api', 'is_admin'])->group(function () {
 });
 
 // User's own orders
-Route::get('/my-orders', [LaundryOrderController::class, 'userOrders'])->middleware('auth:api');
+Route::get('/my-orders', [LaundryOrderController::class, 'userOrders'])->middleware('auth:sanctum');
 
 // Broadcasting
 Broadcast::channel('user.{id}', function ($user, $id) {
     return (int) $user->id === (int) $id;
 });
-Route::post('/broadcasting/auth', [BroadcastController::class, 'authenticate'])->middleware('auth:api');
+Route::post('/broadcasting/auth', [BroadcastController::class, 'authenticate'])->middleware('auth:sanctum');

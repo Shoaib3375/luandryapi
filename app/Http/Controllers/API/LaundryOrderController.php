@@ -45,12 +45,12 @@ class LaundryOrderController extends Controller
     private function applyCouponDiscount($total, $couponCode)
     {
         if (!$couponCode) return ['total' => $total, 'coupon_applied' => false];
-        
+
         $coupon = Coupon::where('code', $couponCode)
             ->where(function ($q) {
                 $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
             })->first();
-            
+
         if ($coupon) {
             $discountAmount = $total * $coupon->discount_percent / 100;
             return [
@@ -60,7 +60,7 @@ class LaundryOrderController extends Controller
                 'discount_amount' => $discountAmount
             ];
         }
-        
+
         return ['total' => $total, 'coupon_applied' => false];
     }
 
@@ -135,7 +135,10 @@ class LaundryOrderController extends Controller
         ]);
 
         // Send notification to database
+        $order->load('user');
         $order->user->notify(new OrderStatusUpdated($order));
+        dd(get_class(auth()->user()));
+
 
         // Broadcast event
         event(new OrderStatusUpdatedEvent("Your order #{$order->id} status updated to {$order->status}", $order->user_id));
@@ -186,8 +189,12 @@ class LaundryOrderController extends Controller
                 'new_status' => 'Cancelled'
             ]);
 
-            // Send notification
-            $order->user->notify(new OrderStatusUpdated($order));
+            // Send notification only if admin cancelled the order
+            if ($user->is_admin && $order->user_id !== $user->id) {
+                $order->load('user');
+                $order->user->notify(new OrderStatusUpdated($order));
+                dd(get_class(auth()->user()));
+            }
 
             // Broadcast event
             event(new OrderStatusUpdatedEvent("Your order #{$order->id} status updated to {$order->status}", $order->user_id));
