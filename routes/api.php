@@ -27,7 +27,7 @@ Route::get('/debug/orders/{id}/logs', function ($id) {
         ->where('order_id', $id)
         ->orderBy('created_at', 'desc')
         ->get();
-        
+
     return response()->json([
         'order_id' => $id,
         'logs' => $logs,
@@ -47,7 +47,7 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 // User order routes
-Route::middleware('auth:api')->group(function () {
+Route::middleware('auth:sanctum')->group(function () {
     Route::get('/orders', [LaundryOrderController::class, 'index']);
     Route::post('/orders', [LaundryOrderController::class, 'store']);
     Route::get('/orders/filter', [LaundryOrderController::class, 'filterByStatus']);
@@ -59,10 +59,11 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
+    Route::post('/coupons/validate', [CouponController::class, 'validate']);
 });
 
 // Admin-only routes
-Route::middleware(['auth:api', 'is_admin'])->group(function () {
+Route::middleware(['auth:sanctum', 'is_admin'])->group(function () {
     Route::put('/orders/{id}/status', [LaundryOrderController::class, 'updateStatus']);
     Route::post('/test/order-log', [TestController::class, 'testOrderLog']);
     Route::post('/coupons', [CouponController::class, 'store']);
@@ -74,10 +75,10 @@ Route::middleware(['auth:api', 'is_admin'])->group(function () {
 });
 
 // User's own orders
-Route::get('/my-orders', [LaundryOrderController::class, 'userOrders'])->middleware('auth:api');
+Route::get('/my-orders', [LaundryOrderController::class, 'userOrders'])->middleware('auth:sanctum');
 
 // Broadcasting
 Broadcast::channel('user.{id}', function ($user, $id) {
     return (int) $user->id === (int) $id;
 });
-Route::post('/broadcasting/auth', [BroadcastController::class, 'authenticate'])->middleware('auth:api');
+Route::post('/broadcasting/auth', [BroadcastController::class, 'authenticate'])->middleware('auth:sanctum');

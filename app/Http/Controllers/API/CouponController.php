@@ -43,4 +43,36 @@ class CouponController extends Controller
     {
         return $this->successResponse(Coupon::orderBy('expires_at', 'asc')->get(), 'Coupons fetched successfully.');
     }
+
+    public function validate(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'code' => 'required|string',
+            ]);
+
+            $coupon = Coupon::where('code', $validated['code'])
+                ->where(function ($query) {
+                    $query->whereNull('expires_at')
+                        ->orWhere('expires_at', '>', now());
+                })
+                ->first();
+
+            if (!$coupon) {
+                return $this->errorResponse('Invalid or expired coupon code.', null, 404);
+            }
+
+            return $this->successResponse([
+                'code' => $coupon->code,
+                'discount_percent' => $coupon->discount_percent,
+                'expires_at' => $coupon->expires_at,
+                'is_valid' => true,
+            ], 'Coupon is valid.');
+
+        } catch (ValidationException $e) {
+            return $this->errorResponse('Validation error.', $e->errors(), 422);
+        } catch (\Throwable $e) {
+            return $this->errorResponse('Failed to validate coupon.', $e->getMessage(), 500);
+        }
+    }
 }
