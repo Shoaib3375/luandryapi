@@ -16,18 +16,11 @@ class LaundryOrder extends Model
         'total_price',
         'status',
         'note',
-        'payment_status'
+        'payment_status',
+        'coupon_code'
     ];
 
-    protected static function booted(): void
-    {
-        static::creating(function ($order) {
-            $service = \App\Models\Service::find($order->service_id);
-            if ($service) {
-                $order->total_price = $service->price * $order->quantity;
-            }
-        });
-    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
