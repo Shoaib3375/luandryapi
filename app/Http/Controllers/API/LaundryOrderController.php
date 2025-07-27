@@ -24,13 +24,28 @@ class LaundryOrderController extends Controller
         private readonly OrderRepository $orderRepository,
     ) {}
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $orders = $this->orderRepository->getOrdersForUser(Auth::user());
+        $params = [
+            'per_page' => $request->get('per_page', 10),
+            'search' => $request->get('search'),
+            'status' => $request->get('status'),
+        ];
+        
+        $orders = $this->orderRepository->getOrdersForUser(Auth::user(), $params);
         
         return response()->json([
-            'data' => $orders,
-            'message' => 'Order list',
+            'data' => LaundryOrderResource::collection($orders),
+            'pagination' => [
+                'current_page' => $orders->currentPage(),
+                'last_page' => $orders->lastPage(),
+                'per_page' => $orders->perPage(),
+                'total' => $orders->total(),
+                'from' => $orders->firstItem(),
+                'to' => $orders->lastItem(),
+                'has_more_pages' => $orders->hasMorePages(),
+            ],
+            'message' => 'Order list retrieved successfully',
             'status' => true,
         ]);
     }
@@ -138,11 +153,27 @@ class LaundryOrderController extends Controller
 
     public function userOrders(Request $request): JsonResponse
     {
-        $orders = $this->orderRepository->getOrdersForUser(auth()->user());
+        $params = [
+            'per_page' => $request->get('per_page', 10),
+            'search' => $request->get('search'),
+            'status' => $request->get('status'),
+        ];
         
-        return $this->successResponse(
-            LaundryOrderResource::collection($orders),
-            'User orders retrieved successfully'
-        );
+        $orders = $this->orderRepository->getOrdersForUser(auth()->user(), $params);
+        
+        return response()->json([
+            'data' => LaundryOrderResource::collection($orders),
+            'pagination' => [
+                'current_page' => $orders->currentPage(),
+                'last_page' => $orders->lastPage(),
+                'per_page' => $orders->perPage(),
+                'total' => $orders->total(),
+                'from' => $orders->firstItem(),
+                'to' => $orders->lastItem(),
+                'has_more_pages' => $orders->hasMorePages(),
+            ],
+            'message' => 'User orders retrieved successfully',
+            'status' => true,
+        ]);
     }
 }
