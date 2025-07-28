@@ -38,18 +38,37 @@ class OrderRepository
             ->first();
     }
 
-    public function getOrdersForUser(User $user, int $perPage = 10): LengthAwarePaginator
+    public function getOrdersForUser(User $user, array $params = []): LengthAwarePaginator
     {
-        if ($user->is_admin) {
-            return LaundryOrder::with(['service', 'user'])
-                ->latest()
-                ->paginate($perPage);
+        $perPage = $params['per_page'] ?? 10;
+        $search = $params['search'] ?? null;
+        $status = $params['status'] ?? null;
+        
+        $query = $user->is_admin 
+            ? LaundryOrder::with(['service', 'user'])
+            : LaundryOrder::with('service')->where('user_id', $user->id);
+
+        if ($search) {
+            $query->where(function($q) use ($search, $user) {
+                $q->where('id', 'like', "%{$search}%")
+                  ->orWhere('note', 'like', "%{$search}%")
+                  ->orWhereHas('service', function($sq) use ($search) {
+                      $sq->where('name', 'like', "%{$search}%");
+                  });
+                if ($user->is_admin) {
+                    $q->orWhereHas('user', function($uq) use ($search) {
+                        $uq->where('name', 'like', "%{$search}%")
+                           ->orWhere('email', 'like', "%{$search}%");
+                    });
+                }
+            });
         }
 
-        return LaundryOrder::with('service')
-            ->where('user_id', $user->id)
-            ->latest()
-            ->paginate($perPage);
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        return $query->latest()->paginate($perPage);
     }
 
     public function getOrdersByStatus(OrderStatus $status, int $perPage = 10): LengthAwarePaginator
