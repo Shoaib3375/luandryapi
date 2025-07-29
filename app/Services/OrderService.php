@@ -2,25 +2,26 @@
 
 namespace App\Services;
 
+use App\Contracts\NotificationServiceInterface;
+use App\Contracts\OrderRepositoryInterface;
 use App\DTOs\CreateOrderDTO;
 use App\Enums\OrderStatus;
-use App\Exceptions\OrderException;
 use App\Models\LaundryOrder;
 use App\Models\OrderLog;
 use App\Models\User;
-use App\Notifications\OrderStatusUpdated;
-use App\Repositories\OrderRepository;
 use App\Repositories\ServiceRepository;
+use App\Services\Validators\OrderValidator;
 use Illuminate\Support\Facades\DB;
 
 class OrderService
 {
     public function __construct(
-        private readonly OrderRepository $orderRepository,
+        private readonly OrderRepositoryInterface $orderRepository,
         private readonly ServiceRepository $serviceRepository,
         private readonly PriceCalculationService $priceService,
         private readonly CouponService $couponService,
-        private readonly NotificationService $notificationService,
+        private readonly NotificationServiceInterface $notificationService,
+        private readonly OrderValidator $validator,
     ) {}
 
     public function createOrder(array $data, int $userId): LaundryOrder
@@ -42,14 +43,11 @@ class OrderService
 
     public function updateOrderStatus(int $orderId, OrderStatus $status, User $admin): LaundryOrder
     {
-        if (!$admin->is_admin) {
-            throw OrderException::unauthorized();
-        }
-
         return DB::transaction(function () use ($orderId, $status, $admin) {
             $order = $this->orderRepository->findById($orderId);
+            $this->validator->validateStatusUpdate($order, $status, $admin);
+            
             $oldStatus = OrderStatus::from($order->status);
-
             if ($oldStatus === $status) {
                 return $order;
             }
@@ -73,15 +71,12 @@ class OrderService
                 throw OrderException::unauthorized();
             }
 
-            if (OrderStatus::from($order->status) !== OrderStatus::PENDING) {
-                throw OrderException::cannotCancelNonPendingOrder();
-            }
+            $this->validator->validateCancellation($order);
 
             $oldStatus = OrderStatus::from($order->status);
             $this->orderRepository->updateStatus($order, OrderStatus::CANCELLED);
             $this->logStatusChange($order, $oldStatus, OrderStatus::CANCELLED, $user);
 
-            // Only notify if admin cancelled someone else's order
             if ($user->is_admin && $order->user_id !== $user->id) {
                 $this->notificationService->notifyOrderStatusUpdate($order);
             }
@@ -101,9 +96,7 @@ class OrderService
                 throw OrderException::unauthorized();
             }
 
-            if (OrderStatus::from($order->status) !== OrderStatus::PENDING) {
-                throw OrderException::cannotUpdateNonPendingOrder();
-            }
+            $this->validator->validateUpdate($order);
 
             $basePrice = $this->priceService->calculateBasePrice($order->service, $data['quantity']);
             $couponCode = $data['coupon_code'] ?? $order->coupon_code;

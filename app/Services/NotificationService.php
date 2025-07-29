@@ -2,11 +2,12 @@
 
 namespace App\Services;
 
+use App\Contracts\NotificationServiceInterface;
 use App\Events\OrderStatusUpdated as OrderStatusUpdatedEvent;
 use App\Models\LaundryOrder;
 use App\Notifications\OrderStatusUpdated;
 
-class NotificationService
+class NotificationService implements NotificationServiceInterface
 {
     public function notifyOrderStatusUpdate(LaundryOrder $order): void
     {

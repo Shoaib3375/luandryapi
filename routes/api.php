@@ -6,6 +6,7 @@ use App\Http\Controllers\API\CouponController;
 use App\Http\Controllers\API\LaundryOrderController;
 use App\Http\Controllers\API\NotificationController;
 use App\Http\Controllers\API\OrderLogController;
+use App\Http\Controllers\API\ProfileController;
 use App\Http\Controllers\API\ServiceController;
 use App\Http\Controllers\API\TestController;
 use App\Models\OrderLog;
@@ -22,18 +23,7 @@ Route::get('/', function () {
 });
 
 // Debug endpoint for order logs
-Route::get('/debug/orders/{id}/logs', function ($id) {
-    $logs = DB::table('order_logs')
-        ->where('order_id', $id)
-        ->orderBy('created_at', 'desc')
-        ->get();
 
-    return response()->json([
-        'order_id' => $id,
-        'logs' => $logs,
-        'count' => $logs->count()
-    ]);
-});
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -49,6 +39,7 @@ Route::middleware('auth:sanctum')->group(function () {
 // User order routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/orders', [LaundryOrderController::class, 'index']);
+    Route::get('/orders/{id}', [LaundryOrderController::class, 'show']);
     Route::post('/orders', [LaundryOrderController::class, 'store']);
     Route::get('/orders/filter', [LaundryOrderController::class, 'filterByStatus']);
     Route::put('/orders/{id}/cancel', [LaundryOrderController::class, 'cancelOrder']);
@@ -60,6 +51,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
     Route::post('/coupons/validate', [CouponController::class, 'validate']);
+
+    // Profile routes
+    Route::get('/profile', [ProfileController::class, 'show']);
+    Route::put('/profile', [ProfileController::class, 'updateProfile']);
+    Route::post('/profile/addresses', [ProfileController::class, 'addAddress']);
+    Route::put('/profile/addresses/{id}', [ProfileController::class, 'updateAddress']);
+    Route::delete('/profile/addresses/{id}', [ProfileController::class, 'deleteAddress']);
 });
 
 // Admin-only routes

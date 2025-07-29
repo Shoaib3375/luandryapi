@@ -11,6 +11,7 @@ readonly class CreateOrderDTO
         public float   $totalPrice,
         public ?string $note = null,
         public ?string $couponCode = null,
+        public ?int    $deliveryAddressId = null,
     ) {}
 
     public static function fromArray(array $data, int $userId): self
@@ -22,6 +23,7 @@ readonly class CreateOrderDTO
             totalPrice: $data['total_price'],
             note: $data['note'] ?? null,
             couponCode: $data['coupon_code'] ?? null,
+            deliveryAddressId: $data['delivery_address_id'] ?? null,
         );
     }
 }

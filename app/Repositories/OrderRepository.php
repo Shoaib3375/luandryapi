@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Contracts\OrderRepositoryInterface;
 use App\DTOs\CreateOrderDTO;
 use App\Enums\OrderStatus;
 use App\Models\LaundryOrder;
@@ -9,7 +10,7 @@ use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
-class OrderRepository
+class OrderRepository implements OrderRepositoryInterface
 {
     public function create(CreateOrderDTO $dto): LaundryOrder
     {
@@ -20,6 +21,7 @@ class OrderRepository
             'total_price' => $dto->totalPrice,
             'note' => $dto->note,
             'coupon_code' => $dto->couponCode,
+            'delivery_address_id' => $dto->deliveryAddressId,
             'status' => OrderStatus::PENDING->value,
             'payment_status' => 'Unpaid',
         ]);
@@ -27,12 +29,12 @@ class OrderRepository
 
     public function findById(int $id): ?LaundryOrder
     {
-        return LaundryOrder::with(['service', 'user'])->find($id);
+        return LaundryOrder::with(['service', 'user', 'deliveryAddress'])->find($id);
     }
 
     public function findByIdForUser(int $id, int $userId): ?LaundryOrder
     {
-        return LaundryOrder::with(['service', 'user'])
+        return LaundryOrder::with(['service', 'user', 'deliveryAddress'])
             ->where('id', $id)
             ->where('user_id', $userId)
             ->first();
@@ -45,7 +47,7 @@ class OrderRepository
         $status = $params['status'] ?? null;
         
         $query = $user->is_admin 
-            ? LaundryOrder::with(['service', 'user'])
+            ? LaundryOrder::with(['service', 'user', 'deliveryAddress'])
             : LaundryOrder::with('service')->where('user_id', $user->id);
 
         if ($search) {
@@ -73,7 +75,7 @@ class OrderRepository
 
     public function getOrdersByStatus(OrderStatus $status, int $perPage = 10): LengthAwarePaginator
     {
-        return LaundryOrder::with(['user', 'service'])
+        return LaundryOrder::with(['user', 'service', 'deliveryAddress'])
             ->where('status', $status->value)
             ->latest()
             ->paginate($perPage);

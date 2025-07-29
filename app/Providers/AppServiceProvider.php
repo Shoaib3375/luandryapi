@@ -12,7 +12,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(
-            \App\Repositories\OrderRepository::class,
+            \App\Contracts\OrderRepositoryInterface::class,
             \App\Repositories\OrderRepository::class
         );
         
@@ -42,8 +42,13 @@ class AppServiceProvider extends ServiceProvider
         );
         
         $this->app->bind(
-            \App\Services\NotificationService::class,
+            \App\Contracts\NotificationServiceInterface::class,
             \App\Services\NotificationService::class
+        );
+        
+        $this->app->bind(
+            \App\Services\Validators\OrderValidator::class,
+            \App\Services\Validators\OrderValidator::class
         );
     }
 
