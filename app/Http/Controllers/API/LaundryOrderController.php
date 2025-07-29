@@ -6,7 +6,7 @@ use App\Enums\OrderStatus;
 use App\Exceptions\OrderException;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\LaundryOrderResource;
-use App\Repositories\OrderRepository;
+use App\Contracts\OrderRepositoryInterface;
 use App\Services\OrderService;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -21,7 +21,7 @@ class LaundryOrderController extends Controller
 
     public function __construct(
         private readonly OrderService $orderService,
-        private readonly OrderRepository $orderRepository,
+        private readonly OrderRepositoryInterface $orderRepository,
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -57,7 +57,8 @@ class LaundryOrderController extends Controller
                 'service_id' => 'required|exists:services,id',
                 'quantity' => 'required|numeric|min:0.1',
                 'note' => 'nullable|string|max:1000',
-                'coupon_code' => 'nullable|string'
+                'coupon_code' => 'nullable|string',
+                'delivery_address_id' => 'nullable|exists:user_addresses,id'
             ]);
 
             $order = $this->orderService->createOrder($validated, auth()->id());
@@ -149,6 +150,24 @@ class LaundryOrderController extends Controller
         } catch (Throwable $e) {
             return $this->exceptionResponse($e, 'Failed to update order.');
         }
+    }
+
+    public function show($id): JsonResponse
+    {
+        $user = auth()->user();
+        
+        $query = $user->is_admin 
+            ? $this->orderRepository->findById($id)
+            : $this->orderRepository->findByIdForUser($id, $user->id);
+            
+        if (!$query) {
+            return $this->errorResponse('Order not found', null, 404);
+        }
+        
+        return $this->successResponse(
+            new LaundryOrderResource($query),
+            'Order details retrieved successfully'
+        );
     }
 
     public function userOrders(Request $request): JsonResponse

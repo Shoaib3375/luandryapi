@@ -17,7 +17,8 @@ class LaundryOrder extends Model
         'status',
         'note',
         'payment_status',
-        'coupon_code'
+        'coupon_code',
+        'delivery_address_id'
     ];
 
 
@@ -29,5 +30,10 @@ class LaundryOrder extends Model
     public function service(): BelongsTo
     {
         return $this->belongsTo(Service::class);
+    }
+
+    public function deliveryAddress(): BelongsTo
+    {
+        return $this->belongsTo(UserAddress::class, 'delivery_address_id');
     }
 }
