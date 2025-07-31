@@ -3,12 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Log;
 
 class OrderLog extends Model
 {
     protected $fillable = ['order_id', 'admin_id', 'old_status', 'new_status'];
-    
+
     protected static function booted()
     {
         static::created(function ($log) {
@@ -21,22 +22,14 @@ class OrderLog extends Model
             ]);
         });
     }
-    
-    public function admin()
+
+    public function admin(): BelongsTo
     {
         return $this->belongsTo(User::class, 'admin_id');
     }
-    
-    public function order()
+
+    public function order(): BelongsTo
     {
         return $this->belongsTo(LaundryOrder::class, 'order_id');
-    }
-    
-    public static function verifyStatusChange($orderId, $oldStatus, $newStatus)
-    {
-        return self::where('order_id', $orderId)
-            ->where('old_status', $oldStatus)
-            ->where('new_status', $newStatus)
-            ->exists();
     }
 }

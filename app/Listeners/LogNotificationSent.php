@@ -13,7 +13,7 @@ class LogNotificationSent
      * @param  NotificationSent  $event
      * @return void
      */
-    public function handle(NotificationSent $event)
+    public function handle(NotificationSent $event): void
     {
         if ($event->channel === 'database') {
             Log::info('Notification stored in database', [

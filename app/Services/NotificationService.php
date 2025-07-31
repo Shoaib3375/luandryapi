@@ -14,17 +14,34 @@ class NotificationService implements NotificationServiceInterface
         try {
             $order->load('user');
             
+            // Only send notification if order has a registered user
             if ($order->user && method_exists($order->user, 'notify')) {
                 $order->user->notify(new OrderStatusUpdated($order));
+                \Log::info('Order status notification sent', [
+                    'order_id' => $order->id,
+                    'user_id' => $order->user_id,
+                    'status' => $order->status
+                ]);
+            } else {
+                \Log::info('Skipping notification for guest order', [
+                    'order_id' => $order->id,
+                    'guest_email' => $order->guest_email
+                ]);
             }
             
-            event(new OrderStatusUpdatedEvent(
-                "Your order #{$order->id} status updated to {$order->status}",
-                $order->user_id
-            ));
+            // Only fire event for registered users
+            if ($order->user_id) {
+                event(new OrderStatusUpdatedEvent(
+                    "Your order #{$order->id} status updated to {$order->status}",
+                    $order->user_id
+                ));
+            }
         } catch (\Throwable $e) {
-            // Log the error but don't fail the operation
-            \Log::error('Failed to send notification: ' . $e->getMessage());
+            \Log::error('Failed to send notification', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
         }
     }
 }

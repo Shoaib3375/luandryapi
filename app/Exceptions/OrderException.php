@@ -20,4 +20,9 @@ class OrderException extends Exception
     {
         return new self('You are not authorized to perform this action.');
     }
+
+    public static function invalidStatusTransition(): self
+    {
+        return new self('Invalid status transition.');
+    }
 }

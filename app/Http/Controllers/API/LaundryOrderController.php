@@ -195,4 +195,30 @@ class LaundryOrderController extends Controller
             'status' => true,
         ]);
     }
+
+    public function guestOrder(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'service_id' => 'required|exists:services,id',
+            'quantity' => 'required|numeric|min:0.1',
+            'guest_name' => 'required|string|max:255',
+            'guest_email' => 'required|email|max:255',
+            'guest_phone' => 'required|string|max:20',
+            'guest_address' => 'required|string|max:500',
+            'note' => 'nullable|string|max:1000',
+        ]);
+
+        try {
+            $order = $this->orderService->createGuestOrder($validated);
+
+            return $this->successResponse(
+                new LaundryOrderResource($order),
+                'Guest order placed successfully',
+                201
+            );
+
+        } catch (Throwable $e) {
+            return $this->exceptionResponse($e, 'Failed to place guest order.');
+        }
+    }
 }

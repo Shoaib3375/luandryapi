@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('category');
             $table->decimal('price', 8, 2);
-            $table->enum('pricing_method', ['fixed', 'weight']);
+            $table->enum('pricing_method', ['per_kg', 'per_item', 'flat_rate']);
             $table->timestamps();
         });
     }

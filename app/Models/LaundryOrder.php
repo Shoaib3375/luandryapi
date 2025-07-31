@@ -18,7 +18,11 @@ class LaundryOrder extends Model
         'note',
         'payment_status',
         'coupon_code',
-        'delivery_address_id'
+        'delivery_address_id',
+        'guest_name',
+        'guest_email',
+        'guest_phone',
+        'guest_address'
     ];
 
 

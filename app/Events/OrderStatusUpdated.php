@@ -19,12 +19,12 @@ class OrderStatusUpdated implements ShouldBroadcast
         $this->userId = $userId;
     }
 
-    public function broadcastOn()
+    public function broadcastOn(): PrivateChannel
     {
         return new PrivateChannel("user.{$this->userId}");
     }
 
-    public function broadcastAs()
+    public function broadcastAs(): string
     {
         return 'OrderStatusUpdated';
     }

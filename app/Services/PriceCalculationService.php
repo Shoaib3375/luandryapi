@@ -10,8 +10,9 @@ class PriceCalculationService
     public function calculateBasePrice(Service $service, float $quantity): float
     {
         return match (PricingMethod::from($service->pricing_method)) {
-            PricingMethod::WEIGHT => $service->price * $quantity,
-            PricingMethod::FIXED => $service->price * (int) $quantity,
+            PricingMethod::PER_KG => $service->price * $quantity,
+            PricingMethod::PER_ITEM => $service->price * (int) $quantity,
+            PricingMethod::FLAT_RATE => $service->price,
         };
     }
 }
