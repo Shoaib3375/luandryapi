@@ -6,6 +6,7 @@ use App\Contracts\NotificationServiceInterface;
 use App\Contracts\OrderRepositoryInterface;
 use App\DTOs\CreateOrderDTO;
 use App\Enums\OrderStatus;
+use App\Exceptions\OrderException;
 use App\Models\LaundryOrder;
 use App\Models\OrderLog;
 use App\Models\User;
@@ -13,22 +14,25 @@ use App\Repositories\ServiceRepository;
 use App\Services\Validators\OrderValidator;
 use Illuminate\Support\Facades\DB;
 
-class OrderService
+readonly class OrderService
 {
     public function __construct(
-        private readonly OrderRepositoryInterface $orderRepository,
-        private readonly ServiceRepository $serviceRepository,
-        private readonly PriceCalculationService $priceService,
-        private readonly CouponService $couponService,
-        private readonly NotificationServiceInterface $notificationService,
-        private readonly OrderValidator $validator,
+        private OrderRepositoryInterface     $orderRepository,
+        private ServiceRepository            $serviceRepository,
+        private PriceCalculationService      $priceService,
+        private CouponService                $couponService,
+        private NotificationServiceInterface $notificationService,
+        private OrderValidator               $validator,
     ) {}
 
+    /**
+     * @throws \Throwable
+     */
     public function createOrder(array $data, int $userId): LaundryOrder
     {
         return DB::transaction(function () use ($data, $userId) {
             $service = $this->serviceRepository->findById($data['service_id']);
-            
+
             $basePrice = $this->priceService->calculateBasePrice($service, $data['quantity']);
             $couponResult = $this->couponService->calculateDiscount($basePrice, $data['coupon_code'] ?? null);
 
@@ -46,7 +50,7 @@ class OrderService
         return DB::transaction(function () use ($orderId, $status, $admin) {
             $order = $this->orderRepository->findById($orderId);
             $this->validator->validateStatusUpdate($order, $status, $admin);
-            
+
             $oldStatus = OrderStatus::from($order->status);
             if ($oldStatus === $status) {
                 return $order;
@@ -60,17 +64,19 @@ class OrderService
         });
     }
 
+    /**
+     * @throws \Throwable
+     */
     public function cancelOrder(int $orderId, User $user): LaundryOrder
     {
         return DB::transaction(function () use ($orderId, $user) {
-            $order = $user->is_admin 
-                ? $this->orderRepository->findById($orderId)
-                : $this->orderRepository->findByIdForUser($orderId, $user->id);
+            $order = $this->orderRepository->findById($orderId);
 
             if (!$order) {
                 throw OrderException::unauthorized();
             }
 
+            $this->validator->validateOwnership($order, $user);
             $this->validator->validateCancellation($order);
 
             $oldStatus = OrderStatus::from($order->status);
@@ -85,17 +91,19 @@ class OrderService
         });
     }
 
+    /**
+     * @throws \Throwable
+     */
     public function updateOrder(int $orderId, array $data, User $user): LaundryOrder
     {
         return DB::transaction(function () use ($orderId, $data, $user) {
-            $order = $user->is_admin 
-                ? $this->orderRepository->findById($orderId)
-                : $this->orderRepository->findByIdForUser($orderId, $user->id);
+            $order = $this->orderRepository->findById($orderId);
 
             if (!$order) {
                 throw OrderException::unauthorized();
             }
 
+            $this->validator->validateOwnership($order, $user);
             $this->validator->validateUpdate($order);
 
             $basePrice = $this->priceService->calculateBasePrice($order->service, $data['quantity']);
@@ -111,6 +119,29 @@ class OrderService
             $this->orderRepository->updateOrder($order, $updateData);
 
             return $order->fresh();
+        });
+    }
+
+    /**
+     * @throws \Throwable
+     */
+    public function createGuestOrder(array $data): LaundryOrder
+    {
+        return DB::transaction(function () use ($data) {
+            $service = $this->serviceRepository->findById($data['service_id']);
+            $totalPrice = $this->priceService->calculateBasePrice($service, $data['quantity']);
+
+            return LaundryOrder::create([
+                'service_id' => $data['service_id'],
+                'quantity' => $data['quantity'],
+                'total_price' => $totalPrice,
+                'guest_name' => $data['guest_name'],
+                'guest_email' => $data['guest_email'],
+                'guest_phone' => $data['guest_phone'],
+                'guest_address' => $data['guest_address'],
+                'note' => $data['note'] ?? null,
+                'status' => OrderStatus::PENDING->value,
+            ]);
         });
     }
 

@@ -27,6 +27,10 @@ Route::get('/', function () {
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
+// Guest routes
+Route::get('/services', [ServiceController::class, 'index']);
+Route::post('/guest/orders', [LaundryOrderController::class, 'guestOrder']);
+
 // User authentication routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
@@ -44,7 +48,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/orders/filter', [LaundryOrderController::class, 'filterByStatus']);
     Route::put('/orders/{id}/cancel', [LaundryOrderController::class, 'cancelOrder']);
     Route::put('/orders/{id}/update', [LaundryOrderController::class, 'updateOrder']);
-    Route::get('/services', [ServiceController::class, 'index']);
     Route::get('/orders/{id}/logs', [OrderLogController::class, 'index']);
     Route::get('/orders/{id}/logs/check/{status}', [OrderLogController::class, 'checkStatusChange']);
     Route::get('/notifications', [NotificationController::class, 'index']);
@@ -64,6 +67,9 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware(['auth:sanctum', 'is_admin'])->group(function () {
     Route::put('/orders/{id}/status', [LaundryOrderController::class, 'updateStatus']);
     Route::post('/test/order-log', [TestController::class, 'testOrderLog']);
+    Route::post('/services', [ServiceController::class, 'store']);
+    Route::put('/services/{id}', [ServiceController::class, 'update']);
+    Route::delete('/services/{id}', [ServiceController::class, 'destroy']);
     Route::post('/coupons', [CouponController::class, 'store']);
     Route::get('/coupons', [CouponController::class, 'index']);
     Route::prefix('admin')->group(function () {

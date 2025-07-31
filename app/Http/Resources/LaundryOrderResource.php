@@ -17,6 +17,7 @@ class LaundryOrderResource extends JsonResource
         return [
             'id'           => $this->id,
             'user_id'      => $this->user_id,
+            'service_id'   => $this->service_id,
             'service'      => new ServiceResource($this->whenLoaded('service')),
             'quantity'     => $this->quantity,
             'note'         => $this->note,
@@ -24,6 +25,21 @@ class LaundryOrderResource extends JsonResource
             'status'       => $this->status,
             'payment_status' => $this->payment_status,
             'coupon_code'  => $this->coupon_code,
+            'guest_name'   => $this->guest_name,
+            'guest_email'  => $this->guest_email,
+            'guest_phone'  => $this->guest_phone,
+            'guest_address' => $this->guest_address,
+            'customer_info' => $this->user_id ? [
+                'type' => 'user',
+                'name' => $this->whenLoaded('user', fn() => $this->user->name),
+                'email' => $this->whenLoaded('user', fn() => $this->user->email),
+            ] : [
+                'type' => 'guest',
+                'name' => $this->guest_name,
+                'email' => $this->guest_email,
+                'phone' => $this->guest_phone,
+                'address' => $this->guest_address,
+            ],
             'created_at'   => $this->created_at,
             
             // User information (for admin)

@@ -22,7 +22,7 @@ class ServiceFactory extends Factory
             'name' => $this->faker->word,
             'category' => 'Clothing',
             'price' => 10.00,
-            'pricing_method' => 'fixed',
+            'pricing_method' => 'flat_rate',
         ];
     }
 }

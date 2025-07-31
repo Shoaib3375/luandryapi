@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Service extends Model
 {
     use HasFactory;
-    protected $fillable = ['name', 'category', 'price', 'pricing_method'];
+    protected $fillable = ['name', 'category', 'price', 'pricing_method', 'price_per_unit'];
 
     public function orders(): hasMany
     {

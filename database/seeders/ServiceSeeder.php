@@ -17,14 +17,14 @@ class ServiceSeeder extends Seeder
             'name' => 'T-Shirt Wash',
             'category' => 'Clothing',
             'price' => 2.00,
-            'pricing_method' => 'fixed',
+            'pricing_method' => 'flat_rate',
         ]);
 
         Service::create([
             'name' => 'Curtain Cleaning',
             'category' => 'Home',
             'price' => 1.5,
-            'pricing_method' => 'weight',
+            'pricing_method' => 'per_kg',
         ]);
     }
 }

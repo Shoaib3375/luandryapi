@@ -7,6 +7,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\BroadcastMessage;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Log;
 
 class OrderStatusUpdated extends Notification
@@ -41,7 +42,7 @@ class OrderStatusUpdated extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['database', 'broadcast'];
+        return ['mail', 'database', 'broadcast'];
     }
 
     /**
@@ -67,6 +68,20 @@ class OrderStatusUpdated extends Notification
     public function toDatabase(object $notifiable): array
     {
         return $this->toArray($notifiable);
+    }
+
+    /**
+     * Get the mail representation of the notification.
+     */
+    public function toMail(object $notifiable): MailMessage
+    {
+        return (new MailMessage)
+            ->subject('Order Status Update')
+            ->line($this->message)
+            ->when($this->order, function ($mail) {
+                return $mail->line('Order ID: ' . $this->order->id)
+                           ->line('New Status: ' . $this->order->status);
+            });
     }
 
     /**
