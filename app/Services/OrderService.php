@@ -36,7 +36,7 @@ readonly class OrderService
 
             foreach ($data['services'] as $serviceData) {
                 $service = $this->serviceRepository->findById($serviceData['service_id']);
-                $itemPrice = $this->priceService->calculateBasePrice($service, $serviceData['quantity']);
+                $itemPrice = $this->priceService->calculateBasePrice($service, (float)$serviceData['quantity']);
                 $totalPrice += $itemPrice;
                 
                 $orderItems[] = [
@@ -62,7 +62,7 @@ readonly class OrderService
                 $order->orderItems()->create($item);
             }
 
-            return $order->load('orderItems.service');
+            return $order->fresh()->load('orderItems.service');
         });
     }
 
@@ -127,7 +127,15 @@ readonly class OrderService
             $this->validator->validateOwnership($order, $user);
             $this->validator->validateUpdate($order);
 
-            $basePrice = $this->priceService->calculateBasePrice($order->service, $data['quantity']);
+            // Calculate total price from all order items
+            $totalPrice = 0;
+            foreach ($order->orderItems as $item) {
+                if ($item->service_id === $order->orderItems->first()->service_id) {
+                    $totalPrice += $this->priceService->calculateBasePrice($item->service, $data['quantity']);
+                    break;
+                }
+            }
+            $basePrice = $totalPrice ?: $this->priceService->calculateBasePrice($order->orderItems->first()->service, $data['quantity']);
             $couponCode = $data['coupon_code'] ?? $order->coupon_code;
             $couponResult = $this->couponService->calculateDiscount($basePrice, $couponCode);
 
@@ -154,7 +162,7 @@ readonly class OrderService
 
             foreach ($data['services'] as $serviceData) {
                 $service = $this->serviceRepository->findById($serviceData['service_id']);
-                $itemPrice = $this->priceService->calculateBasePrice($service, $serviceData['quantity']);
+                $itemPrice = $this->priceService->calculateBasePrice($service, (float)$serviceData['quantity']);
                 $totalPrice += $itemPrice;
                 
                 $orderItems[] = [
@@ -179,7 +187,7 @@ readonly class OrderService
                 $order->orderItems()->create($item);
             }
 
-            return $order->load('orderItems.service');
+            return $order->fresh()->load('orderItems.service');
         });
     }
 

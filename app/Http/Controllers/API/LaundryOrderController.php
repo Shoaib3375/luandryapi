@@ -53,6 +53,19 @@ class LaundryOrderController extends Controller
     public function store(Request $request): JsonResponse
     {
         try {
+            // Handle backward compatibility - convert old format to new format
+            if ($request->has('service_id') && !$request->has('services')) {
+                $request->merge([
+                    'services' => [[
+                        'service_id' => $request->service_id,
+                        'quantity' => $request->quantity
+                    ]]
+                ]);
+            }
+
+            // Remove total_price from request to ensure backend calculation
+            $request->request->remove('total_price');
+
             $validated = $request->validate([
                 'services' => 'required|array|min:1',
                 'services.*.service_id' => 'required|exists:services,id',

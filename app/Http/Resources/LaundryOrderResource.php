@@ -22,7 +22,7 @@ class LaundryOrderResource extends JsonResource
                     return [
                         'id' => $item->id,
                         'service_id' => $item->service_id,
-                        'service' => new ServiceResource($item->whenLoaded('service')),
+                        'service' => $item->service ? new ServiceResource($item->service) : null,
                         'quantity' => $item->quantity,
                         'unit_price' => $item->unit_price,
                         'total_price' => $item->total_price,
