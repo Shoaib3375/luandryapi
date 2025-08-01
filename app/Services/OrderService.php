@@ -31,17 +31,38 @@ readonly class OrderService
     public function createOrder(array $data, int $userId): LaundryOrder
     {
         return DB::transaction(function () use ($data, $userId) {
-            $service = $this->serviceRepository->findById($data['service_id']);
+            $totalPrice = 0;
+            $orderItems = [];
 
-            $basePrice = $this->priceService->calculateBasePrice($service, $data['quantity']);
-            $couponResult = $this->couponService->calculateDiscount($basePrice, $data['coupon_code'] ?? null);
+            foreach ($data['services'] as $serviceData) {
+                $service = $this->serviceRepository->findById($serviceData['service_id']);
+                $itemPrice = $this->priceService->calculateBasePrice($service, $serviceData['quantity']);
+                $totalPrice += $itemPrice;
+                
+                $orderItems[] = [
+                    'service_id' => $serviceData['service_id'],
+                    'quantity' => $serviceData['quantity'],
+                    'unit_price' => $service->price,
+                    'total_price' => $itemPrice,
+                ];
+            }
 
-            $dto = CreateOrderDTO::fromArray([
-                ...$data,
+            $couponResult = $this->couponService->calculateDiscount($totalPrice, $data['coupon_code'] ?? null);
+
+            $order = LaundryOrder::create([
+                'user_id' => $userId,
                 'total_price' => $couponResult->total,
-            ], $userId);
+                'status' => 'Pending',
+                'note' => $data['note'] ?? null,
+                'coupon_code' => $data['coupon_code'] ?? null,
+                'delivery_address_id' => $data['delivery_address_id'] ?? null,
+            ]);
 
-            return $this->orderRepository->create($dto);
+            foreach ($orderItems as $item) {
+                $order->orderItems()->create($item);
+            }
+
+            return $order->load('orderItems.service');
         });
     }
 
@@ -128,12 +149,23 @@ readonly class OrderService
     public function createGuestOrder(array $data): LaundryOrder
     {
         return DB::transaction(function () use ($data) {
-            $service = $this->serviceRepository->findById($data['service_id']);
-            $totalPrice = $this->priceService->calculateBasePrice($service, $data['quantity']);
+            $totalPrice = 0;
+            $orderItems = [];
 
-            return LaundryOrder::create([
-                'service_id' => $data['service_id'],
-                'quantity' => $data['quantity'],
+            foreach ($data['services'] as $serviceData) {
+                $service = $this->serviceRepository->findById($serviceData['service_id']);
+                $itemPrice = $this->priceService->calculateBasePrice($service, $serviceData['quantity']);
+                $totalPrice += $itemPrice;
+                
+                $orderItems[] = [
+                    'service_id' => $serviceData['service_id'],
+                    'quantity' => $serviceData['quantity'],
+                    'unit_price' => $service->price,
+                    'total_price' => $itemPrice,
+                ];
+            }
+
+            $order = LaundryOrder::create([
                 'total_price' => $totalPrice,
                 'guest_name' => $data['guest_name'],
                 'guest_email' => $data['guest_email'],
@@ -142,6 +174,12 @@ readonly class OrderService
                 'note' => $data['note'] ?? null,
                 'status' => OrderStatus::PENDING->value,
             ]);
+
+            foreach ($orderItems as $item) {
+                $order->orderItems()->create($item);
+            }
+
+            return $order->load('orderItems.service');
         });
     }
 

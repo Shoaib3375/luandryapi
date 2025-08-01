@@ -54,8 +54,9 @@ class LaundryOrderController extends Controller
     {
         try {
             $validated = $request->validate([
-                'service_id' => 'required|exists:services,id',
-                'quantity' => 'required|numeric|min:0.1',
+                'services' => 'required|array|min:1',
+                'services.*.service_id' => 'required|exists:services,id',
+                'services.*.quantity' => 'required|numeric|min:0.1',
                 'note' => 'nullable|string|max:1000',
                 'coupon_code' => 'nullable|string',
                 'delivery_address_id' => 'nullable|exists:user_addresses,id'
@@ -199,8 +200,9 @@ class LaundryOrderController extends Controller
     public function guestOrder(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'service_id' => 'required|exists:services,id',
-            'quantity' => 'required|numeric|min:0.1',
+            'services' => 'required|array|min:1',
+            'services.*.service_id' => 'required|exists:services,id',
+            'services.*.quantity' => 'required|numeric|min:0.1',
             'guest_name' => 'required|string|max:255',
             'guest_email' => 'required|email|max:255',
             'guest_phone' => 'required|string|max:20',

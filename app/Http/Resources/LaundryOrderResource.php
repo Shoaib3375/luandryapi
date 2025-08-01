@@ -17,9 +17,18 @@ class LaundryOrderResource extends JsonResource
         return [
             'id'           => $this->id,
             'user_id'      => $this->user_id,
-            'service_id'   => $this->service_id,
-            'service'      => new ServiceResource($this->whenLoaded('service')),
-            'quantity'     => $this->quantity,
+            'order_items'  => $this->whenLoaded('orderItems', function () {
+                return $this->orderItems->map(function ($item) {
+                    return [
+                        'id' => $item->id,
+                        'service_id' => $item->service_id,
+                        'service' => new ServiceResource($item->whenLoaded('service')),
+                        'quantity' => $item->quantity,
+                        'unit_price' => $item->unit_price,
+                        'total_price' => $item->total_price,
+                    ];
+                });
+            }),
             'note'         => $this->note,
             'total_price'  => $this->total_price,
             'status'       => $this->status,
