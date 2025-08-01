@@ -25,8 +25,12 @@ class OrderTest extends TestCase
 
         $response = $this->withHeader('Authorization', "Bearer $token")
             ->postJson('/api/orders', [
-                'service_id' => $service->id,
-                'quantity' => 2,
+                'services' => [
+                    [
+                        'service_id' => $service->id,
+                        'quantity' => 2,
+                    ]
+                ],
             ]);
 //        dump($response->json());
 

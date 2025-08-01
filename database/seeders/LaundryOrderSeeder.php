@@ -21,13 +21,18 @@ class LaundryOrderSeeder extends Seeder
             'price_per_unit' => 2.00,
         ]);
 
-        LaundryOrder::create([
+        $order = LaundryOrder::create([
             'user_id' => $user->id,
-            'service_id' => $service->id,
-            'quantity' => 3,
             'total_price' => 6.00,
             'status' => 'Pending',
             'payment_status' => 'Unpaid',
+        ]);
+
+        $order->orderItems()->create([
+            'service_id' => $service->id,
+            'quantity' => 3,
+            'unit_price' => 2.00,
+            'total_price' => 6.00,
         ]);
     }
 }

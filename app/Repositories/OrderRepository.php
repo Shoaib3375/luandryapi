@@ -29,12 +29,12 @@ class OrderRepository implements OrderRepositoryInterface
 
     public function findById(int $id): ?LaundryOrder
     {
-        return LaundryOrder::with(['service', 'user', 'deliveryAddress'])->find($id);
+        return LaundryOrder::with(['orderItems.service', 'user', 'deliveryAddress'])->find($id);
     }
 
     public function findByIdForUser(int $id, int $userId): ?LaundryOrder
     {
-        return LaundryOrder::with(['service', 'user', 'deliveryAddress'])
+        return LaundryOrder::with(['orderItems.service', 'user', 'deliveryAddress'])
             ->where('id', $id)
             ->where('user_id', $userId)
             ->first();
@@ -47,14 +47,14 @@ class OrderRepository implements OrderRepositoryInterface
         $status = $params['status'] ?? null;
         
         $query = $user->is_admin 
-            ? LaundryOrder::with(['service', 'user', 'deliveryAddress'])
-            : LaundryOrder::with('service')->where('user_id', $user->id);
+            ? LaundryOrder::with(['orderItems.service', 'user', 'deliveryAddress'])
+            : LaundryOrder::with('orderItems.service')->where('user_id', $user->id);
 
         if ($search) {
             $query->where(function($q) use ($search, $user) {
                 $q->where('id', 'like', "%{$search}%")
                   ->orWhere('note', 'like', "%{$search}%")
-                  ->orWhereHas('service', function($sq) use ($search) {
+                  ->orWhereHas('orderItems.service', function($sq) use ($search) {
                       $sq->where('name', 'like', "%{$search}%");
                   });
                 if ($user->is_admin) {
@@ -75,7 +75,7 @@ class OrderRepository implements OrderRepositoryInterface
 
     public function getOrdersByStatus(OrderStatus $status, int $perPage = 10): LengthAwarePaginator
     {
-        return LaundryOrder::with(['user', 'service', 'deliveryAddress'])
+        return LaundryOrder::with(['user', 'orderItems.service', 'deliveryAddress'])
             ->where('status', $status->value)
             ->latest()
             ->paginate($perPage);
