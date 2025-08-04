@@ -13,7 +13,6 @@ class OrderLog extends Model
     protected static function booted()
     {
         static::created(function ($log) {
-            // Log when a new status change is recorded
             Log::info('Order status change logged', [
                 'order_id' => $log->order_id,
                 'admin_id' => $log->admin_id,

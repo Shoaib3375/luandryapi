@@ -2,6 +2,16 @@
 
 namespace App\Providers;
 
+use App\Contracts\NotificationServiceInterface;
+use App\Contracts\OrderRepositoryInterface;
+use App\Repositories\CouponRepository;
+use App\Repositories\OrderRepository;
+use App\Repositories\ServiceRepository;
+use App\Services\CouponService;
+use App\Services\NotificationService;
+use App\Services\OrderService;
+use App\Services\PriceCalculationService;
+use App\Services\Validators\OrderValidator;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -12,43 +22,43 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(
-            \App\Contracts\OrderRepositoryInterface::class,
-            \App\Repositories\OrderRepository::class
+            OrderRepositoryInterface::class,
+            OrderRepository::class
         );
-        
+
         $this->app->bind(
-            \App\Repositories\CouponRepository::class,
-            \App\Repositories\CouponRepository::class
+            CouponRepository::class,
+            CouponRepository::class
         );
-        
+
         $this->app->bind(
-            \App\Repositories\ServiceRepository::class,
-            \App\Repositories\ServiceRepository::class
+            ServiceRepository::class,
+            ServiceRepository::class
         );
-        
+
         $this->app->bind(
-            \App\Services\OrderService::class,
-            \App\Services\OrderService::class
+            OrderService::class,
+            OrderService::class
         );
-        
+
         $this->app->bind(
-            \App\Services\CouponService::class,
-            \App\Services\CouponService::class
+            CouponService::class,
+            CouponService::class
         );
-        
+
         $this->app->bind(
-            \App\Services\PriceCalculationService::class,
-            \App\Services\PriceCalculationService::class
+            PriceCalculationService::class,
+            PriceCalculationService::class
         );
-        
+
         $this->app->bind(
-            \App\Contracts\NotificationServiceInterface::class,
-            \App\Services\NotificationService::class
+            NotificationServiceInterface::class,
+            NotificationService::class
         );
-        
+
         $this->app->bind(
-            \App\Services\Validators\OrderValidator::class,
-            \App\Services\Validators\OrderValidator::class
+            OrderValidator::class,
+            OrderValidator::class
         );
     }
 

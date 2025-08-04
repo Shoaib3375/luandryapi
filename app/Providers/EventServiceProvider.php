@@ -2,9 +2,11 @@
 
 namespace App\Providers;
 
+use App\Listeners\LogNotificationSent;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
+use Illuminate\Notifications\Events\NotificationSent;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -18,8 +20,8 @@ class EventServiceProvider extends ServiceProvider
             SendEmailVerificationNotification::class,
         ],
         // Add your custom events here
-        \Illuminate\Notifications\Events\NotificationSent::class => [
-            \App\Listeners\LogNotificationSent::class,
+        NotificationSent::class => [
+            LogNotificationSent::class,
         ],
     ];
 
