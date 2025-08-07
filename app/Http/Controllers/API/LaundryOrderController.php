@@ -31,9 +31,9 @@ class LaundryOrderController extends Controller
             'search' => $request->get('search'),
             'status' => $request->get('status'),
         ];
-        
+
         $orders = $this->orderRepository->getOrdersForUser(Auth::user(), $params);
-        
+
         return response()->json([
             'data' => LaundryOrderResource::collection($orders),
             'pagination' => [
@@ -169,15 +169,15 @@ class LaundryOrderController extends Controller
     public function show($id): JsonResponse
     {
         $user = auth()->user();
-        
-        $query = $user->is_admin 
+
+        $query = $user->is_admin
             ? $this->orderRepository->findById($id)
             : $this->orderRepository->findByIdForUser($id, $user->id);
-            
+
         if (!$query) {
             return $this->errorResponse('Order not found', null, 404);
         }
-        
+
         return $this->successResponse(
             new LaundryOrderResource($query),
             'Order details retrieved successfully'
@@ -191,9 +191,9 @@ class LaundryOrderController extends Controller
             'search' => $request->get('search'),
             'status' => $request->get('status'),
         ];
-        
+
         $orders = $this->orderRepository->getOrdersForUser(auth()->user(), $params);
-        
+
         return response()->json([
             'data' => LaundryOrderResource::collection($orders),
             'pagination' => [

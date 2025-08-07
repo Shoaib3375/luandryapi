@@ -8,6 +8,8 @@ use App\Models\Service;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use Log;
 
 class ServiceController extends Controller
 {
@@ -37,8 +39,8 @@ class ServiceController extends Controller
                 'Service created successfully',
                 201
             );
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            \Log::info('Service validation failed:', $e->errors());
+        } catch (ValidationException $e) {
+            Log::info('Service validation failed:', $e->errors());
             throw $e;
         }
     }
@@ -46,7 +48,7 @@ class ServiceController extends Controller
     public function update(Request $request, $id): JsonResponse
     {
         $service = Service::findOrFail($id);
-        
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'category' => 'required|string|max:255',
