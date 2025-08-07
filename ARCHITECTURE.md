@@ -49,14 +49,15 @@ LaundryOrderController → OrderService → LaundryOrderResource
 **Purpose**: Data access layer abstraction
 - Implements **Contracts** (interfaces)
 - Used by **Services** for database operations
+- Integrates **Redis Cache** for performance optimization
 - `OrderRepository`, `ServiceRepository`, `CouponRepository`
 
 ### **Services** (`app/Services/`)
 **Purpose**: Business logic layer
 - `OrderService`: Core order management logic
-- `PriceCalculationService`: Handles pricing logic
+- `PriceCalculationService`: Handles pricing logic with cache
 - `NotificationService`: Manages notifications
-- Uses **Repositories**, **DTOs**, and **Validators**
+- Uses **Repositories**, **DTOs**, **Redis Cache**, and **Validators**
 
 ### **Traits** (`app/Traits/`)
 **Purpose**: Reusable code snippets
@@ -92,25 +93,30 @@ LaundryOrderController → OrderService → LaundryOrderResource
    ↓
 3. Controller calls Service
    ↓
-4. Service uses Repository (via Contract)
+4. Service checks Redis Cache
    ↓
-5. Service fires Event
+5. Service uses Repository (via Contract) if cache miss
    ↓
-6. Listener handles Event
+6. Service caches result in Redis
    ↓
-7. Listener sends Notification
+7. Service fires Event
    ↓
-8. Controller returns Resource response
+8. Listener handles Event
+   ↓
+9. Listener sends Notification
+   ↓
+10. Controller returns Resource response
 ```
 
 ## **Key Interconnections**
 
-- **Controllers** → **Services** → **Repositories** → **Models**
+- **Controllers** → **Services** → **Redis Cache** → **Repositories** → **Models**
 - **Events** → **Listeners** → **Notifications**
 - **Providers** bind **Contracts** to implementations
 - **DTOs** carry data between layers
 - **Resources** format output
 - **Traits** provide reusable functionality
 - **Enums** ensure type safety across layers
+- **Redis Cache** accelerates data access across all layers
 
 This architecture follows SOLID principles with clear separation of concerns, dependency injection, and event-driven design for scalable laundry service management.
