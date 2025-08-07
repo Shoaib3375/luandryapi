@@ -8,7 +8,6 @@ use App\Enums\OrderStatus;
 use App\Models\LaundryOrder;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\Collection;
 
 class OrderRepository implements OrderRepositoryInterface
 {
@@ -45,22 +44,22 @@ class OrderRepository implements OrderRepositoryInterface
         $perPage = $params['per_page'] ?? 10;
         $search = $params['search'] ?? null;
         $status = $params['status'] ?? null;
-        
-        $query = $user->is_admin 
+
+        $query = $user->is_admin
             ? LaundryOrder::with(['orderItems.service', 'user', 'deliveryAddress'])
             : LaundryOrder::with('orderItems.service')->where('user_id', $user->id);
 
         if ($search) {
             $query->where(function($q) use ($search, $user) {
-                $q->where('id', 'like', "%{$search}%")
-                  ->orWhere('note', 'like', "%{$search}%")
+                $q->where('id', 'like', "%$search%")
+                  ->orWhere('note', 'like', "%$search%")
                   ->orWhereHas('orderItems.service', function($sq) use ($search) {
-                      $sq->where('name', 'like', "%{$search}%");
+                      $sq->where('name', 'like', "%$search%");
                   });
                 if ($user->is_admin) {
                     $q->orWhereHas('user', function($uq) use ($search) {
-                        $uq->where('name', 'like', "%{$search}%")
-                           ->orWhere('email', 'like', "%{$search}%");
+                        $uq->where('name', 'like', "%$search%")
+                           ->orWhere('email', 'like', "%$search%");
                     });
                 }
             });
