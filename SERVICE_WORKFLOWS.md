@@ -88,7 +88,7 @@ flowchart TD
     C -->|No| E[Query Database]
     E --> F[Apply Filters]
     F --> G[Sort by Category/Price]
-    G --> H[Cache in Redis (TTL: 1hr)]
+    G --> H[Cache in Redis TTL 1hr]
     H --> I[Return Services]
     D --> J[Format Response]
     I --> J
