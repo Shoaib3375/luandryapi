@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ServiceResource;
 use App\Models\Service;
+use App\Repositories\ServiceRepository;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,9 +16,11 @@ class ServiceController extends Controller
 {
     use ApiResponseTrait;
 
+    public function __construct(private ServiceRepository $serviceRepository) {}
+
     public function index(): JsonResponse
     {
-        $services = ServiceResource::collection(Service::all());
+        $services = ServiceResource::collection($this->serviceRepository->getAll());
         return $this->successResponse($services, 'Service list fetched successfully');
     }
 
@@ -33,6 +36,7 @@ class ServiceController extends Controller
             ]);
 
             $service = Service::create($validated);
+            $this->serviceRepository->clearCache();
 
             return $this->successResponse(
                 new ServiceResource($service),
@@ -58,6 +62,7 @@ class ServiceController extends Controller
         ]);
 
         $service->update($validated);
+        $this->serviceRepository->clearCache($service->id);
 
         return $this->successResponse(
             new ServiceResource($service),
@@ -69,6 +74,7 @@ class ServiceController extends Controller
     {
         $service = Service::findOrFail($id);
         $service->delete();
+        $this->serviceRepository->clearCache($service->id);
 
         return $this->successResponse(null, 'Service deleted successfully');
     }

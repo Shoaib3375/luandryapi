@@ -8,6 +8,7 @@ use App\Enums\OrderStatus;
 use App\Models\LaundryOrder;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Cache;
 
 class OrderRepository implements OrderRepositoryInterface
 {
@@ -28,7 +29,9 @@ class OrderRepository implements OrderRepositoryInterface
 
     public function findById(int $id): ?LaundryOrder
     {
-        return LaundryOrder::with(['orderItems.service', 'user', 'deliveryAddress'])->find($id);
+        return Cache::remember("order:{$id}", 1800, function () use ($id) {
+            return LaundryOrder::with(['orderItems.service', 'user', 'deliveryAddress'])->find($id);
+        });
     }
 
     public function findByIdForUser(int $id, int $userId): ?LaundryOrder
@@ -82,11 +85,21 @@ class OrderRepository implements OrderRepositoryInterface
 
     public function updateStatus(LaundryOrder $order, OrderStatus $status): bool
     {
-        return $order->update(['status' => $status->value]);
+        $result = $order->update(['status' => $status->value]);
+        $this->clearOrderCache($order->id, $order->user_id);
+        return $result;
     }
 
     public function updateOrder(LaundryOrder $order, array $data): bool
     {
-        return $order->update($data);
+        $result = $order->update($data);
+        $this->clearOrderCache($order->id, $order->user_id);
+        return $result;
+    }
+
+    private function clearOrderCache(int $orderId, int $userId): void
+    {
+        Cache::forget("order:{$orderId}");
+        Cache::forget("user_orders:{$userId}");
     }
 }

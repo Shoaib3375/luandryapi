@@ -121,6 +121,7 @@ graph TB
         W[OrderLog Model]
         X[Coupon Model]
         Y[MySQL Database]
+        Z1[Redis Cache]
     end
     
     subgraph "Events & Notifications"
@@ -165,6 +166,12 @@ graph TB
     V --> Y
     W --> Y
     X --> Y
+    
+    Q --> Z1
+    R --> Z1
+    S --> Z1
+    M --> Z1
+    N --> Z1
     
     U --> Z
     Z --> P
@@ -253,12 +260,13 @@ mindmap
 - User registration and login
 - Admin role-based access control
 - Protected API routes
+- Redis session caching for performance
 
 ### 📦 Order Management
 - Create orders with quantity and service selection
 - Real-time order status tracking (Pending → Processing → Completed/Cancelled)
-- Order history and filtering
-- Price calculation with coupon support
+- Order history and filtering with Redis caching
+- Price calculation with coupon support and cache optimization
 
 ### 👨‍💼 Admin Controls
 - Update order status with logging
@@ -274,10 +282,20 @@ mindmap
 ### 💰 Pricing & Coupons
 - Fixed and weight-based pricing methods
 - Coupon validation and discount application
-- Price calculation service
+- Price calculation service with Redis caching
+- Service data cached for faster pricing
 
 ### 🧪 Testing Infrastructure
 - Feature tests for API endpoints
 - Unit tests for business logic
 - SQLite in-memory testing database
+- Redis cache testing with mock data
 - GitHub Actions CI/CD ready
+
+### ⚡ Redis Cache Integration
+- Service data caching (TTL: 2 hours)
+- Order lists caching (TTL: 30 minutes)
+- Price calculations caching (TTL: 10 minutes)
+- Search results caching (TTL: 15 minutes)
+- Report data caching (TTL: 1 hour)
+- Smart cache invalidation on data updates
