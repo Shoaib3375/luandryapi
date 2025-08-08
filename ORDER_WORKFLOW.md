@@ -212,15 +212,15 @@ stateDiagram-v2
 
 ### **Key Endpoints & Flow**
 
-| Endpoint | Method | Flow | Status Changes |
-|----------|--------|------|----------------|
-| `/api/register` | POST | User Registration → JWT Token | - |
-| `/api/login` | POST | Authentication → JWT Token | - |
-| `/api/services` | GET | Fetch Available Services | - |
-| `/api/orders` | POST | Create Order → PENDING | `null → PENDING` |
-| `/api/orders` | GET | List User Orders | - |
-| `/api/orders/{id}` | GET | Order Details | - |
-| `/api/orders/{id}/status` | PUT | Admin Status Update | `PENDING → PROCESSING → COMPLETED` |
+| Endpoint                  | Method | Flow                          | Status Changes                     |
+|---------------------------|--------|-------------------------------|------------------------------------|
+| `/api/register`           | POST   | User Registration → JWT Token | -                                  |
+| `/api/login`              | POST   | Authentication → JWT Token    | -                                  |
+| `/api/services`           | GET    | Fetch Available Services      | -                                  |
+| `/api/orders`             | POST   | Create Order → PENDING        | `null → PENDING`                   |
+| `/api/orders`             | GET    | List User Orders              | -                                  |
+| `/api/orders/{id}`        | GET    | Order Details                 | -                                  |
+| `/api/orders/{id}/status` | PUT    | Admin Status Update           | `PENDING → PROCESSING → COMPLETED` |
 
 ### **Database Relationships**
 ```mermaid
