@@ -11,11 +11,13 @@ class IsAdmin
     /**
      * Handle an incoming request.
      *
-     * @param Closure(Request): (Response) $next
+     * @param Closure(\Illuminate\Http\Request): (Response) $next
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!auth()->check() || !auth()->user()->is_admin) {
+        $user = auth()->user();
+        
+        if (!$user || !$user->is_admin) {
             return response()->json(['error' => 'Unauthorized — Admins only'], 403);
         }
 

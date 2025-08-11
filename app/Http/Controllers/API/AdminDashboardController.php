@@ -49,11 +49,19 @@ class AdminDashboardController extends Controller
             ->get();
 
         $data = [
+            'total_orders' => LaundryOrder::count(),
             'daily'   => $dailyRevenue,
             'monthly' => $monthlyRevenue,
         ];
 
         return $this->successResponse($data, 'Revenue report fetched successfully');
+    }
+
+    public function countAllOrders(): JsonResponse
+    {
+        $totalOrders = LaundryOrder::count();
+        
+        return $this->successResponse(['total_orders' => $totalOrders], 'Total orders count fetched successfully');
     }
 
 }
