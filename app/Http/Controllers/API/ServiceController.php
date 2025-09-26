@@ -16,7 +16,7 @@ class ServiceController extends Controller
 {
     use ApiResponseTrait;
 
-    public function __construct(private ServiceRepository $serviceRepository) {}
+    public function __construct(private readonly ServiceRepository $serviceRepository) {}
 
     public function index(): JsonResponse
     {

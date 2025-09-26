@@ -3,6 +3,7 @@
 namespace App\Traits;
 
 use Illuminate\Http\JsonResponse;
+use Throwable;
 
 trait ApiResponseTrait
 {
@@ -23,7 +24,7 @@ trait ApiResponseTrait
             'data' => $data,
         ], $code);
     }
-    protected function exceptionResponse(\Throwable $e, string $message = 'Server Error', int $code = 500): JsonResponse
+    protected function exceptionResponse(Throwable $e, string $message = 'Server Error', int $code = 500): JsonResponse
     {
         if (config('app.debug')) {
             return response()->json([

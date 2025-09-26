@@ -3,6 +3,8 @@
 A RESTful backend system for managing laundry services, built with **Laravel 12**. This API allows customers to browse services, place orders, and track their status — while admins can manage and update order workflows.
 
 ---
+<a href="https://www.buymeacoffee.com/mdshoaiburq" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
+
 
 ## 🚀 Features
 

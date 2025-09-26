@@ -5,10 +5,10 @@ namespace App\Services;
 use App\DTOs\CouponDiscountDTO;
 use App\Repositories\CouponRepository;
 
-class CouponService
+readonly class CouponService
 {
     public function __construct(
-        private readonly CouponRepository $couponRepository
+        private CouponRepository $couponRepository
     ) {}
 
     public function calculateDiscount(float $total, ?string $couponCode): CouponDiscountDTO

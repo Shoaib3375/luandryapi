@@ -44,11 +44,11 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
-        if (!Auth::attempt($credentials)) {
+        if (!Auth::guard('web')->attempt($credentials)) {
             return $this->errorResponse('Invalid credentials', 401);
         }
 
-        $user = Auth::user();
+        $user = Auth::guard('web')->user();
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return $this->successResponse([
