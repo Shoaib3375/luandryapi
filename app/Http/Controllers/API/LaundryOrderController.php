@@ -175,7 +175,7 @@ class LaundryOrderController extends Controller
             : $this->orderRepository->findByIdForUser($id, $user->id);
 
         if (!$query) {
-            return $this->errorResponse('Order not found', null, 404);
+            return $this->errorResponse('Order not found', (int)null, 404);
         }
 
         return $this->successResponse(
